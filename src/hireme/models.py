@@ -9,7 +9,7 @@ Layers:
 
 from __future__ import annotations
 
-from enum import StrEnum
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 # --------------------------------------------------------------------------------------
 
 
-class AgentName(StrEnum):
+class AgentName(str, Enum):
     quant = "quant"
     airesearch = "airesearch"
     bigtech = "bigtech"
@@ -26,25 +26,25 @@ class AgentName(StrEnum):
     university = "university"
 
 
-class Provider(StrEnum):
+class Provider(str, Enum):
     anthropic = "anthropic"
     ollama = "ollama"
     openai = "openai"
     gemini = "gemini"
 
 
-class OutputFormat(StrEnum):
+class OutputFormat(str, Enum):
     md = "md"
     json = "json"
     html = "html"
 
 
-class Mode(StrEnum):
+class Mode(str, Enum):
     candidate = "candidate"
     recruiter = "recruiter"
 
 
-class CareerStage(StrEnum):
+class CareerStage(str, Enum):
     """Self-identified career stage / seniority, spanning industry and academia."""
 
     student = "student"
