@@ -1,0 +1,72 @@
+name: Bug report
+description: Something in HireMe behaves incorrectly or crashes.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! **Please redact personal data** — do not paste API keys,
+        tokens, or full resumes. Scrub secrets from any logs.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect to happen, and what actually happened?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The exact `hireme` command (redact handles/keys) and any inputs.
+      render: shell
+    validations:
+      required: true
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Which agent?
+      options:
+        - "n/a"
+        - quant
+        - airesearch
+        - bigtech
+        - general
+        - university
+    validations:
+      required: false
+  - type: dropdown
+    id: provider
+    attributes:
+      label: LLM provider
+      options:
+        - anthropic
+        - ollama
+        - openai
+        - gemini
+        - "n/a"
+    validations:
+      required: false
+  - type: input
+    id: version
+    attributes:
+      label: HireMe version / commit
+      placeholder: "0.1.0 or git SHA"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS & Python version
+      placeholder: "Windows 11, Python 3.11.8"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / traceback
+      description: Run with `--verbose`. **Redact secrets and personal data.**
+      render: shell
+    validations:
+      required: false

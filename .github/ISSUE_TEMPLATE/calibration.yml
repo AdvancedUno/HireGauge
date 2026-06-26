@@ -1,0 +1,50 @@
+name: Scoring / calibration feedback
+description: A score or judgement seems mis-calibrated for the evidence or experience level.
+title: "[Calibration]: "
+labels: ["calibration"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        HireMe aims to score **demonstrated skill**, fairly and with **cited rubrics**. Use this to flag
+        a score that doesn't match a defensible real-world hiring bar. **Please redact personal data.**
+  - type: dropdown
+    id: agent
+    attributes:
+      label: Which agent?
+      options:
+        - quant
+        - airesearch
+        - bigtech
+        - general
+        - university
+    validations:
+      required: true
+  - type: input
+    id: level
+    attributes:
+      label: Experience level / target level
+      placeholder: "e.g. --level new-grad --target-level junior"
+    validations:
+      required: true
+  - type: input
+    id: dimension
+    attributes:
+      label: Which score / dimension?
+      placeholder: "e.g. competitive-programming, research-fit, overall"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected vs. produced
+      description: What score did you expect, what did HireMe produce, and why is the gap wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / source
+      description: The signal or citation (e.g. a row in `docs/rubrics.md`) that should move this score.
+    validations:
+      required: true

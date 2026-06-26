@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "hireme"
+version = "0.1.0"
+description = "Specialized, multi-agent candidate self-assessment across quant, AI research, big tech, general SWE, and university admissions."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "EunHo Lee", email = "ehlee8276@gmail.com" }]
+keywords = ["resume", "evaluation", "hiring", "career", "github", "llm", "claude", "anthropic"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Intended Audience :: Developers",
+]
+dependencies = [
+  "typer>=0.12",
+  "rich>=13.7",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "python-dotenv>=1.0",
+  "anthropic>=0.49",
+  "httpx>=0.27",
+  "jinja2>=3.1",
+  "pymupdf4llm>=0.0.17",
+]
+
+[project.optional-dependencies]
+web = ["trafilatura>=1.10"]
+scholar = ["scholarly>=1.7"]
+kaggle = ["kaggle>=1.6"]
+openai = ["openai>=1.40"]
+gemini = ["google-genai>=0.3"]
+ollama = ["ollama>=0.3"]
+dev = ["pytest>=8", "pytest-mock>=3.14", "respx>=0.21", "ruff>=0.6"]
+all = ["hireme[web,scholar,kaggle,openai,gemini,ollama]"]
+
+[project.scripts]
+hireme = "hireme.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/AdvancedUno/HireMe"
+Repository = "https://github.com/AdvancedUno/HireMe"
+Issues = "https://github.com/AdvancedUno/HireMe/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hireme"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+# UP042: keep `class X(str, Enum)` — intentional for Typer/pydantic enum compatibility.
+ignore = ["E501", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# Typer intentionally uses function calls (Option/Argument) as argument defaults.
+"src/hireme/cli.py" = ["B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

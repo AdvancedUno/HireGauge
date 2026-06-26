@@ -1,0 +1,178 @@
+"""HireMe command-line interface.
+
+``hireme --agent <name> [inputs] [experience] [model/output]`` runs an evaluation;
+``hireme agents`` lists the evaluator agents and their rubrics.
+"""
+
+from __future__ import annotations
+
+import sys
+
+import typer
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+from . import __version__
+from .agents import all_agents, get_agent
+from .models import AgentName, CareerStage, ExperienceContext, Mode, OutputFormat, Provider
+
+# Best-effort UTF-8 output so Rich glyphs render on Windows consoles.
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8")  # type: ignore[union-attr]
+    except Exception:  # noqa: BLE001
+        pass
+
+app = typer.Typer(
+    add_completion=False,
+    no_args_is_help=True,
+    help="HireMe — specialized, multi-agent candidate self-assessment "
+    "(quant · airesearch · bigtech · general · university).",
+)
+console = Console()
+
+
+def _rubric_table(agent_name: str) -> Table:
+    a = get_agent(agent_name)
+    table = Table(
+        title=f"Rubric - [bold]{a.name}[/bold] ({a.title}) - weights sum to {a.weight_total():g}",
+        title_justify="left",
+    )
+    table.add_column("Dimension")
+    table.add_column("Weight", justify="right")
+    table.add_column("GT", justify="center")
+    for d in a.dimensions:
+        table.add_row(d.label, f"{d.weight:g}", "*" if d.deterministic else "")
+    return table
+
+
+@app.command("agents")
+def agents_cmd() -> None:
+    """List the evaluator agents and the dimensions/signals each weights."""
+    for a in all_agents():
+        console.print(
+            f"[bold cyan]{a.name}[/bold cyan] - {a.title}   "
+            f"[dim](signals: {', '.join(a.signals)})[/dim]"
+        )
+        console.print(_rubric_table(a.name))
+        console.print()
+    console.print("[dim]* = has a deterministic, ground-truth-scored component.[/dim]")
+
+
+def _run_preview(
+    *,
+    agent: str,
+    inputs: dict[str, str | None],
+    exp: ExperienceContext,
+    provider: str,
+    model: str,
+    mode: str,
+    fmt: str,
+) -> None:
+    a = get_agent(agent)
+    console.print(Panel.fit(f"[bold]{a.title}[/bold]\n{a.description}", title=f"HireMe - {a.name}"))
+    console.print(f"[dim]Experience:[/dim] {exp.describe()}")
+    note = a.expectation_for(exp.stage.value if exp.stage else None)
+    if note:
+        console.print(f"[dim]Level bar:[/dim] {note}")
+
+    inputs_table = Table(title="Inputs", title_justify="left")
+    inputs_table.add_column("Source")
+    inputs_table.add_column("Value")
+    provided = {k: v for k, v in inputs.items() if v}
+    if provided:
+        for k, v in provided.items():
+            inputs_table.add_row(k, str(v))
+    else:
+        inputs_table.add_row("(none)", "[yellow]no inputs provided[/yellow]")
+    console.print(inputs_table)
+
+    console.print(_rubric_table(agent))
+    console.print(
+        f"[dim]Provider:[/dim] {provider}  [dim]Model:[/dim] {model}  "
+        f"[dim]Mode:[/dim] {mode}  [dim]Format:[/dim] {fmt}"
+    )
+    console.print(
+        Panel.fit(
+            "Data collection + LLM evaluation are being built (phases 2–5 in docs/TODO.md).\n"
+            "This preview shows the agent, inputs, experience calibration, and rubric that "
+            "will drive the full report.",
+            title="Status",
+            border_style="yellow",
+        )
+    )
+
+
+@app.callback(invoke_without_command=True)
+def main(
+    ctx: typer.Context,
+    agent: AgentName | None = typer.Option(None, "--agent", "-a", help="Evaluator agent (required to run)."),
+    # --- inputs ---
+    resume: str | None = typer.Option(None, "--resume", help="Path to resume PDF/text."),
+    github: str | None = typer.Option(None, "--github", help="GitHub username or profile URL."),
+    scholar: str | None = typer.Option(None, "--scholar", help="Google Scholar profile URL."),
+    orcid: str | None = typer.Option(None, "--orcid", help="ORCID id."),
+    arxiv: str | None = typer.Option(None, "--arxiv", help="arXiv author id or URL."),
+    codeforces: str | None = typer.Option(None, "--codeforces", help="Codeforces handle."),
+    leetcode: str | None = typer.Option(None, "--leetcode", help="LeetCode handle (best-effort)."),
+    kaggle: str | None = typer.Option(None, "--kaggle", help="Kaggle handle."),
+    site: str | None = typer.Option(None, "--site", help="Portfolio/blog URL."),
+    linkedin: str | None = typer.Option(None, "--linkedin", help="LinkedIn export PDF (manual)."),
+    # --- experience / level ---
+    yoe: float | None = typer.Option(None, "--yoe", help="Years of professional experience."),
+    level: CareerStage | None = typer.Option(None, "--level", help="Career stage / seniority."),
+    target_level: CareerStage | None = typer.Option(
+        None, "--target-level", help="Aspirational stage/role to aim for."
+    ),
+    title: str | None = typer.Option(None, "--title", help="Current title."),
+    # --- target ---
+    role: str | None = typer.Option(None, "--role", help="Target role to match against."),
+    jd: str | None = typer.Option(None, "--jd", help="Job-description file to match against."),
+    # --- model / output ---
+    provider: Provider = typer.Option(Provider.anthropic, "--provider", help="LLM backend."),
+    model: str = typer.Option("claude-opus-4-8", "--model", help="Model id."),
+    mode: Mode = typer.Option(Mode.candidate, "--mode", help="Report mode."),
+    fmt: OutputFormat = typer.Option(OutputFormat.md, "--format", help="Report format."),
+    out: str | None = typer.Option(None, "--out", help="Write the report to this path."),
+    no_cache: bool = typer.Option(False, "--no-cache", help="Bypass the API response cache."),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output."),
+    version: bool = typer.Option(False, "--version", help="Show version and exit."),
+) -> None:
+    if version:
+        console.print(f"hireme {__version__}")
+        raise typer.Exit()
+    if ctx.invoked_subcommand is not None:
+        return
+    if agent is None:
+        console.print(ctx.get_help())
+        raise typer.Exit()
+
+    exp = ExperienceContext(yoe=yoe, stage=level, target_stage=target_level, current_title=title)
+    inputs = {
+        "resume": resume,
+        "github": github,
+        "scholar": scholar,
+        "orcid": orcid,
+        "arxiv": arxiv,
+        "codeforces": codeforces,
+        "leetcode": leetcode,
+        "kaggle": kaggle,
+        "site": site,
+        "linkedin": linkedin,
+        "role": role,
+        "jd": jd,
+    }
+    _run_preview(
+        agent=agent.value,
+        inputs=inputs,
+        exp=exp,
+        provider=provider.value,
+        model=model,
+        mode=mode.value,
+        fmt=fmt.value,
+    )
+
+
+if __name__ == "__main__":  # pragma: no cover
+    app()
