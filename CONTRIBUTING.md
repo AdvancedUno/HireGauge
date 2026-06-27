@@ -17,7 +17,7 @@ ruff check .
 - `src/hireme/agents/` — the 5 domain rubrics (dimensions, weights, thresholds, level expectations, prompts).
 - `src/hireme/evaluator.py` — deterministic scoring + LLM rubric pass, blended and level-calibrated.
 - `src/hireme/report/` — render Markdown / JSON / HTML + the candidate action plan.
-- `docs/PLAN.md`, `docs/TODO.md`, `docs/rubrics.md` — design, status, and cited rubric grounding.
+- `docs/rubrics.md` — cited rubric grounding (weights, calibration notes, and sources).
 
 ## Working with the repo's Claude Code helpers
 This repo ships dev helpers under `.claude/` (used automatically when you work here with Claude Code):
@@ -41,7 +41,7 @@ This repo ships dev helpers under `.claude/` (used automatically when you work h
 - Run a `report-auditor` pass before sending a PR that touches scoring or templates.
 
 ## PRs
-Keep changes focused, add/adjust tests, run `pytest` + `ruff`, and update `docs/TODO.md`.
+Keep changes focused, add/adjust tests, and run `pytest` + `ruff` (update `docs/rubrics.md` if you change weights).
 
 ## Code of Conduct
 By participating, you agree to abide by our [Code of Conduct](.github/CODE_OF_CONDUCT.md).

@@ -26,7 +26,7 @@ experience-level calibration, and a coaching report.
 
 | `--agent`     | Evaluates like…              | Leans hardest on |
 | ------------- | ---------------------------- | ---------------- |
-| `quant`       | Jane Street / Citadel / HRT  | competitive programming (Codeforces/ICPC), math olympiads, prob/stats, pedigree |
+| `quant`       | Jane Street / Citadel / HRT  | math & probability/statistics, low-latency systems, research, experience (algorithmic problem-solving = one signal) |
 | `airesearch`  | Anthropic / OpenAI / DeepMind| first-author papers (NeurIPS/ICML/ICLR), citations/h-index, ML GitHub + OSS, Kaggle |
 | `bigtech`     | Google / Meta / Amazon       | DSA/LeetCode, system design, internship pedigree, quantified impact, leadership |
 | `general`     | broad software hiring        | real (vs tutorial) GitHub projects, skills breadth, portfolio, communication |
@@ -42,14 +42,14 @@ grounded in how these places actually hire (see `docs/rubrics.md`).
 4. **Deterministic ground-truth scoring blended with LLM judgment** (e.g. Codeforces rating → tier in code).
 5. **Experience-level calibration** — the same profile is judged differently at intern vs senior vs PhD.
 6. **Coaching report** with a concrete, prioritized action plan.
-7. **Claude-first, pluggable** — best quality on Claude; runs on local Ollama / OpenAI / Gemini too.
+7. **Pluggable LLM** — Gemini by default; switch to Claude / OpenAI / local Ollama with `--provider`.
 
 ## Install
 ```bash
 git clone <repo> && cd hireme
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -e ".[dev,web]"
-cp .env.example .env      # set ANTHROPIC_API_KEY  (and GITHUB_TOKEN for higher GitHub limits)
+pip install -e ".[dev,gemini]"
+cp .env.example .env      # set GEMINI_API_KEY  (and GITHUB_TOKEN for higher GitHub limits)
 ```
 
 ## Quickstart
@@ -69,18 +69,25 @@ hireme --help
 - inputs: `--resume --github --scholar/--orcid/--arxiv --codeforces/--leetcode --kaggle --site --linkedin`
 - experience: `--yoe <float> --level <stage> --target-level <stage> --title <str>`
   (stages: `student, intern, new-grad, junior, mid, senior, staff, principal, masters-applicant, phd-applicant, phd-student, postdoc`)
-- model: `--provider {anthropic,ollama,openai,gemini}` `--model` (default `claude-opus-4-8`)
+- model: `--provider {gemini,anthropic,ollama,openai}` `--model` (default `gemini-2.5-flash`)
 - output: `--format {md,json,html}` `--out` · `--mode {candidate,recruiter}` · `--no-cache` `--verbose`
 
 ## How it works
-`collect` (fault-tolerant, cached) → `normalize` into one profile → `analyze` (authenticity + flags) →
-`evaluate` (deterministic scoring **+** a single Claude `messages.parse()` rubric pass, blended and
-level-calibrated) → `report`. See `docs/PLAN.md` for the full design and `docs/TODO.md` for status.
+`collect` (fault-tolerant, cached; auto-discovers links from the resume) → `analyze` (GitHub authenticity +
+deterministic strength signals) → `evaluate` (a structured-output LLM rubric pass **blended** with the
+deterministic signals, level-calibrated) → `report` (Markdown / JSON / HTML). The resume is also parsed into
+structured fields. The cited rubric weights live in `docs/rubrics.md` (or run `hireme agents`).
 
 ## Privacy & fairness
 HireMe scores on demonstrated skills, projects, contributions, and experience — not on name, gender, or
 demographics. Pedigree/GPA only count where a domain's real hiring bar defensibly uses them (and never as the
 driver). Reports show the evidence behind every score.
+
+## Acknowledgements
+HireMe was **inspired by HackerRank's open-source [`hiring-agent`](https://github.com/interviewstreet/hiring-agent)**
+— the project that showed a resume-to-score LLM pipeline could work. HireMe takes that idea much further (five
+domain-specialized agents, multi-source signal fusion + verification, experience-level calibration, and
+deterministic-plus-LLM scoring) as an **independent, original implementation — no code is copied from it**.
 
 ## License
 [MIT](LICENSE) · An independent project, inspired by but not derived from HackerRank's `hiring-agent`.

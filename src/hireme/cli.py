@@ -7,14 +7,16 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
 import typer
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
 from . import __version__
 from .agents import all_agents, get_agent
+from .config import Settings, get_settings
+from .llm.factory import default_model_for
 from .models import AgentName, CareerStage, ExperienceContext, Mode, OutputFormat, Provider
 
 # Best-effort UTF-8 output so Rich glyphs render on Windows consoles.
@@ -43,7 +45,7 @@ def _rubric_table(agent_name: str) -> Table:
     table.add_column("Weight", justify="right")
     table.add_column("GT", justify="center")
     for d in a.dimensions:
-        table.add_row(d.label, f"{d.weight:g}", "*" if d.deterministic else "")
+        table.add_row(d.label, f"{d.weight:g}", "*" if d.is_blended else "")
     return table
 
 
@@ -57,57 +59,56 @@ def agents_cmd() -> None:
         )
         console.print(_rubric_table(a.name))
         console.print()
-    console.print("[dim]* = has a deterministic, ground-truth-scored component.[/dim]")
+    console.print("[dim]* = score is blended with a deterministic ground-truth signal (GitHub / Scholar).[/dim]")
 
 
-def _run_preview(
-    *,
-    agent: str,
-    inputs: dict[str, str | None],
-    exp: ExperienceContext,
-    provider: str,
-    model: str,
-    mode: str,
-    fmt: str,
-) -> None:
-    a = get_agent(agent)
-    console.print(Panel.fit(f"[bold]{a.title}[/bold]\n{a.description}", title=f"HireMe - {a.name}"))
-    console.print(f"[dim]Experience:[/dim] {exp.describe()}")
-    note = a.expectation_for(exp.stage.value if exp.stage else None)
-    if note:
-        console.print(f"[dim]Level bar:[/dim] {note}")
+def _resolve_model(model: str | None, prov: str, settings: Settings) -> str:
+    """Resolve the model id. An explicit --model wins; a configured DEFAULT_MODEL applies
+    only to the default provider (so switching --provider falls back to that provider's
+    own default rather than sending another provider's model id)."""
+    if model:
+        return model
+    if settings.default_model and prov == settings.default_provider:
+        return settings.default_model
+    return default_model_for(prov)
 
-    inputs_table = Table(title="Inputs", title_justify="left")
-    inputs_table.add_column("Source")
-    inputs_table.add_column("Value")
-    provided = {k: v for k, v in inputs.items() if v}
-    if provided:
-        for k, v in provided.items():
-            inputs_table.add_row(k, str(v))
+
+def _execute(cfg, fmt: str, out: str | None) -> None:
+    from rich.markdown import Markdown
+
+    from .pipeline import run as run_pipeline
+    from .report import render_html, render_markdown
+
+    a = get_agent(cfg.agent)
+    console.print(
+        f"[bold]{a.title}[/bold] · {cfg.experience.describe()} · "
+        f"[dim]{cfg.provider}:{cfg.model}[/dim]"
+    )
+    with console.status("[bold]Collecting signals + evaluating…[/bold]", spinner="dots"):
+        report = run_pipeline(cfg)
+
+    md = render_markdown(report)
+    if fmt == "json":
+        file_content = report.model_dump_json(indent=2)
+    elif fmt == "html":
+        file_content = render_html(report)
     else:
-        inputs_table.add_row("(none)", "[yellow]no inputs provided[/yellow]")
-    console.print(inputs_table)
+        file_content = md
 
-    console.print(_rubric_table(agent))
-    console.print(
-        f"[dim]Provider:[/dim] {provider}  [dim]Model:[/dim] {model}  "
-        f"[dim]Mode:[/dim] {mode}  [dim]Format:[/dim] {fmt}"
-    )
-    console.print(
-        Panel.fit(
-            "Data collection + LLM evaluation are being built (phases 2–5 in docs/TODO.md).\n"
-            "This preview shows the agent, inputs, experience calibration, and rubric that "
-            "will drive the full report.",
-            title="Status",
-            border_style="yellow",
-        )
-    )
+    if out:
+        Path(out).write_text(file_content, encoding="utf-8")
+        console.print(f"[green]Wrote[/green] {out}")
+
+    if fmt == "json":
+        console.print_json(file_content)
+    else:
+        console.print(Markdown(md))
 
 
 @app.callback(invoke_without_command=True)
 def main(
     ctx: typer.Context,
-    agent: AgentName | None = typer.Option(None, "--agent", "-a", help="Evaluator agent (required to run)."),
+    agent: AgentName | None = typer.Option(None, "--agent", "-a", help="Evaluator agent (default: general)."),
     # --- inputs ---
     resume: str | None = typer.Option(None, "--resume", help="Path to resume PDF/text."),
     github: str | None = typer.Option(None, "--github", help="GitHub username or profile URL."),
@@ -130,8 +131,10 @@ def main(
     role: str | None = typer.Option(None, "--role", help="Target role to match against."),
     jd: str | None = typer.Option(None, "--jd", help="Job-description file to match against."),
     # --- model / output ---
-    provider: Provider = typer.Option(Provider.anthropic, "--provider", help="LLM backend."),
-    model: str = typer.Option("claude-opus-4-8", "--model", help="Model id."),
+    provider: Provider | None = typer.Option(
+        None, "--provider", help="LLM backend (default: DEFAULT_PROVIDER, else gemini)."
+    ),
+    model: str | None = typer.Option(None, "--model", help="Model id (default: per-provider)."),
     mode: Mode = typer.Option(Mode.candidate, "--mode", help="Report mode."),
     fmt: OutputFormat = typer.Option(OutputFormat.md, "--format", help="Report format."),
     out: str | None = typer.Option(None, "--out", help="Write the report to this path."),
@@ -144,34 +147,29 @@ def main(
         raise typer.Exit()
     if ctx.invoked_subcommand is not None:
         return
-    if agent is None:
+    has_input = any(
+        [resume, github, scholar, orcid, arxiv, codeforces, leetcode, kaggle, site, linkedin]
+    )
+    if agent is None and not has_input:
         console.print(ctx.get_help())
         raise typer.Exit()
+    agent_value = agent.value if agent is not None else "general"
 
+    settings = get_settings()
+    prov = provider.value if provider is not None else settings.default_provider
+    mdl = _resolve_model(model, prov, settings)
     exp = ExperienceContext(yoe=yoe, stage=level, target_stage=target_level, current_title=title)
-    inputs = {
-        "resume": resume,
-        "github": github,
-        "scholar": scholar,
-        "orcid": orcid,
-        "arxiv": arxiv,
-        "codeforces": codeforces,
-        "leetcode": leetcode,
-        "kaggle": kaggle,
-        "site": site,
-        "linkedin": linkedin,
-        "role": role,
-        "jd": jd,
-    }
-    _run_preview(
-        agent=agent.value,
-        inputs=inputs,
-        exp=exp,
-        provider=provider.value,
-        model=model,
-        mode=mode.value,
-        fmt=fmt.value,
+
+    from .pipeline import RunConfig
+
+    cfg = RunConfig(
+        agent=agent_value,
+        resume=resume, github=github, scholar=scholar, orcid=orcid, arxiv=arxiv,
+        codeforces=codeforces, leetcode=leetcode, kaggle=kaggle, site=site, linkedin=linkedin,
+        role=role, jd=jd, experience=exp,
+        provider=prov, model=mdl, mode=mode.value, no_cache=no_cache,
     )
+    _execute(cfg, fmt.value, out)
 
 
 if __name__ == "__main__":  # pragma: no cover

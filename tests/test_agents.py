@@ -7,7 +7,7 @@ import pytest
 from hireme.agents import agent_names, all_agents, get_agent
 
 EXPECTED = {"quant", "airesearch", "bigtech", "general", "university"}
-VALID_SIGNALS = {"resume", "github", "publications", "competitive", "kaggle", "web"}
+VALID_SIGNALS = {"resume", "github", "publications", "kaggle", "web"}
 
 
 def test_registry_has_the_five_agents():
@@ -35,6 +35,14 @@ def test_signals_are_known():
 def test_get_agent_roundtrips():
     for name in agent_names():
         assert get_agent(name).name == name
+
+
+def test_is_blended_is_derived_from_gt_signal_and_blend():
+    for a in all_agents():
+        for d in a.dimensions:
+            assert d.is_blended == bool(d.gt_signal and d.blend > 0), (a.name, d.key)
+            if d.is_blended:
+                assert d.gt_signal in {"github", "publication", "citation"}, (a.name, d.key)
 
 
 def test_get_agent_unknown_raises():

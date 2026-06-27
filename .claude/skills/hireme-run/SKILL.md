@@ -12,8 +12,8 @@ candidate's experience level, and emits a coaching report.
 ```bash
 cd hireme
 python -m venv .venv && source .venv/Scripts/activate   # Windows Git Bash; or .venv/bin/activate on *nix
-pip install -e ".[dev,web]"
-cp .env.example .env   # set ANTHROPIC_API_KEY (default provider), GITHUB_TOKEN (raises GH rate limit)
+pip install -e ".[dev,gemini]"
+cp .env.example .env   # set GEMINI_API_KEY (default provider), GITHUB_TOKEN (raises GH rate limit)
 ```
 
 ## Core usage
@@ -22,7 +22,7 @@ hireme --agent quant \
        --resume "../EunHo Lee Main Resume SWE.pdf" \
        --github <user> --codeforces <handle> --scholar <url> --kaggle <handle> --site <url> \
        --yoe 1 --level new-grad --target-level junior \
-       --model claude-opus-4-8 --format md --out report.md
+       --model gemini-2.5-flash --format md --out report.md
 hireme agents          # list agents + the signals/dimensions each weights
 hireme --help
 ```
@@ -31,7 +31,7 @@ Key flags: `--agent {quant,airesearch,bigtech,general,university}` (required); i
 `--resume/--github/--scholar/--orcid/--arxiv/--codeforces/--leetcode/--kaggle/--site/--linkedin`;
 **experience** `--yoe <float> --level <stage> --target-level <stage> --title <str>`
 (stages: student, intern, new-grad, junior, mid, senior, staff, principal, masters-applicant, phd-applicant,
-phd-student, postdoc); `--provider {anthropic,ollama,openai,gemini}` + `--model`; `--mode {candidate,recruiter}`;
+phd-student, postdoc); `--provider {gemini,anthropic,ollama,openai}` + `--model`; `--mode {candidate,recruiter}`;
 `--format {md,json,html}` `--out`; `--no-cache` `--verbose`.
 
 ## Reading a report
@@ -51,6 +51,6 @@ inline.
 - **Prompt cache:** run twice with `--verbose`; the second run should report `cache_read_input_tokens > 0`.
 
 ## Cost notes
-Default is `claude-opus-4-8` with adaptive thinking at high effort (best judgment). For cheaper iteration use
-`--model claude-sonnet-4-6`. The large rubric system prompt is prompt-cached, so repeated runs are cheap.
-For calibration sweeps, drive everything through the `eval-calibrator` agent.
+Default is Gemini `gemini-2.5-flash` (fast, low-cost). Use `--model gemini-2.5-pro` for higher-quality
+judgment, or `--provider anthropic --model claude-opus-4-8` for Claude. Responses are cached on disk, so
+repeated runs are cheap. For calibration sweeps, drive everything through the `eval-calibrator` agent.

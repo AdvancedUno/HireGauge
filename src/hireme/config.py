@@ -29,8 +29,9 @@ class Settings(BaseSettings):
     ollama_host: str = "http://localhost:11434"
 
     # --- defaults (overridable by CLI flags) ---
-    default_provider: str = "anthropic"
-    default_model: str = "claude-opus-4-8"
+    default_provider: str = "gemini"
+    # None => resolved per provider via llm.factory.default_model_for()
+    default_model: str | None = None
 
     # --- cache ---
     cache_enabled: bool = True
