@@ -96,10 +96,72 @@ class ExperienceContext(BaseModel):
 # --------------------------------------------------------------------------------------
 
 
+class DiscoveredProfiles(BaseModel):
+    """Identifiers/links auto-discovered from the resume. CLI flags override these."""
+
+    github: str | None = None
+    linkedin: str | None = None
+    websites: list[str] = Field(default_factory=list)
+    scholar: str | None = None
+    orcid: str | None = None
+    arxiv: str | None = None
+    codeforces: str | None = None
+    leetcode: str | None = None
+    kaggle: str | None = None
+    twitter: str | None = None
+    email: str | None = None
+    phone: str | None = None
+
+    def identifiers(self) -> dict[str, str]:
+        """Non-empty discovered identifiers, excluding the ``websites`` list — the shared
+        projection used by the dossier prompt and the Markdown/HTML reports."""
+        return {
+            k: v
+            for k, v in self.model_dump().items()
+            if v and k != "websites" and isinstance(v, str)
+        }
+
+
+class WorkItem(BaseModel):
+    company: str | None = None
+    title: str | None = None
+    dates: str | None = None
+    highlights: list[str] = Field(default_factory=list)
+
+
+class EducationItem(BaseModel):
+    institution: str | None = None
+    degree: str | None = None
+    field: str | None = None
+    dates: str | None = None
+    gpa: str | None = None
+
+
+class ProjectItem(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    tech: list[str] = Field(default_factory=list)
+
+
+class ResumeParsed(BaseModel):
+    """LLM-extracted structured view of a resume (best-effort, cached)."""
+
+    name: str | None = None
+    headline: str | None = None
+    work: list[WorkItem] = Field(default_factory=list)
+    education: list[EducationItem] = Field(default_factory=list)
+    projects: list[ProjectItem] = Field(default_factory=list)
+    skills: list[str] = Field(default_factory=list)
+    awards: list[str] = Field(default_factory=list)
+
+
 class ResumeSignal(BaseModel):
     path: str | None = None
     text: str = ""
     char_count: int = 0
+    links: list[str] = Field(default_factory=list)  # raw URLs (PDF link annotations + inline)
+    discovered: DiscoveredProfiles = Field(default_factory=DiscoveredProfiles)
+    parsed: ResumeParsed | None = None
 
 
 class GitHubRepo(BaseModel):
@@ -162,19 +224,6 @@ class PublicationSignal(BaseModel):
     publications: list[Publication] = Field(default_factory=list)
 
 
-class CompetitiveSignal(BaseModel):
-    codeforces_handle: str | None = None
-    codeforces_rating: int | None = None
-    codeforces_max_rating: int | None = None
-    codeforces_rank: str | None = None
-    codeforces_contests: int | None = None
-    leetcode_handle: str | None = None
-    leetcode_solved: int | None = None
-    leetcode_rating: float | None = None
-    # Olympiad / contest mentions detected in the resume (IMO, IOI, ICPC, Putnam, ...)
-    olympiad_mentions: list[str] = Field(default_factory=list)
-
-
 class KaggleSignal(BaseModel):
     handle: str | None = None
     competitions_tier: str | None = None  # novice | contributor | expert | master | grandmaster
@@ -202,7 +251,6 @@ class CandidateProfile(BaseModel):
     resume: ResumeSignal | None = None
     github: GitHubSignal | None = None
     publications: PublicationSignal | None = None
-    competitive: CompetitiveSignal | None = None
     kaggle: KaggleSignal | None = None
     web: list[WebSignal] = Field(default_factory=list)
 
@@ -217,8 +265,6 @@ class CandidateProfile(BaseModel):
             out.append("github")
         if self.publications:
             out.append("publications")
-        if self.competitive:
-            out.append("competitive")
         if self.kaggle:
             out.append("kaggle")
         if self.web:
@@ -252,6 +298,13 @@ class Evaluation(BaseModel):
     agent: str
     overall_score: float = Field(description="0..100 weighted overall")
     band: str = Field(description="Strong | Competitive | Developing | Early")
+    screen_verdict: str = Field(
+        "", description="Would the candidate pass an initial screen: no | borderline | yes"
+    )
+    percentile: int | None = Field(
+        None, description="Estimated 0..100 percentile vs. the realistic applicant pool for this role+level"
+    )
+    positioning: str = Field("", description="Where the candidate stands vs. the pool for this role+level")
     summary: str
     dimensions: list[DimensionScore] = Field(default_factory=list)
     strengths: list[str] = Field(default_factory=list)

@@ -35,3 +35,8 @@ htmlcov/
 Thumbs.db
 .idea/
 .vscode/
+report.md
+
+# Local-only: build-log / planning notes (docs/rubrics.md IS published)
+docs/PLAN.md
+docs/TODO.md

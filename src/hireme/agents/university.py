@@ -15,7 +15,8 @@ AGENT = Agent(
     description="Evaluates like a CS/ML admissions committee: research experience & first-author "
     "publications, research-fit, academic record, letters, projects, and service.",
     dimensions=(
-        Dimension("research_publications", "Research Experience & Publications", 35, deterministic=True,
+        Dimension("research_publications", "Research Experience & Publications", 35,
+                  gt_signal="publication", blend=0.4,
                   description="First-author papers, research internships, sustained research work"),
         Dimension("research_fit_direction", "Research Fit & Direction", 20,
                   description="Clear, specific research interests and advisor/lab fit (SOP/notes)"),
@@ -24,6 +25,7 @@ AGENT = Agent(
         Dimension("letters", "Letters / Recommenders", 10,
                   description="Strength/relevance of recommenders (if provided)"),
         Dimension("technical_projects", "Technical Projects", 10,
+                  gt_signal="github", blend=0.35,
                   description="Implementation skill demonstrated via GitHub/projects"),
         Dimension("breadth_service", "Breadth & Service", 10,
                   description="TA/mentoring, workshops, open-source, community involvement"),
