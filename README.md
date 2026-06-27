@@ -65,7 +65,7 @@ hireme --help
 ```
 
 ### Key flags
-- `--agent {quant,airesearch,bigtech,general,university}` (required)
+- `--agent {quant,airesearch,bigtech,general,university}` (defaults to `general`)
 - inputs: `--resume --github --scholar/--orcid/--arxiv --codeforces/--leetcode --kaggle --site --linkedin`
 - experience: `--yoe <float> --level <stage> --target-level <stage> --title <str>`
   (stages: `student, intern, new-grad, junior, mid, senior, staff, principal, masters-applicant, phd-applicant, phd-student, postdoc`)
