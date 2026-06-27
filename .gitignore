@@ -16,8 +16,8 @@ env/
 .env.*
 !.env.example
 
-# HireMe runtime
-.hireme_cache/
+# HireGauge runtime
+.hiregauge_cache/
 reports/
 *.report.md
 *.report.json

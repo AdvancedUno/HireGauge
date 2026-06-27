@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from hireme.collectors.resume import collect_resume, discover_profiles
+from hiregauge.collectors.resume import collect_resume, discover_profiles
 
 
 def test_discovers_common_profiles_from_text_and_uris():

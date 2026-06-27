@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from hireme.analysis.github_authenticity import _is_recent, assess_github
-from hireme.collectors.github import extract_username
-from hireme.models import GitHubRepo, GitHubSignal
+from hiregauge.analysis.github_authenticity import _is_recent, assess_github
+from hiregauge.collectors.github import extract_username
+from hiregauge.models import GitHubRepo, GitHubSignal
 
 
 def test_extract_username_variants():

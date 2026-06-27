@@ -1,7 +1,7 @@
-# HireMe rubrics — weights & grounding
+# HireGauge rubrics — weights & grounding
 
 This document is the rationale behind every agent's dimensions and weights. The weights
-themselves live in `src/hireme/agents/*.py` and are deliberately declarative so they stay
+themselves live in `src/hiregauge/agents/*.py` and are deliberately declarative so they stay
 **tunable and auditable** — this file explains *why* they're set the way they are, grounded
 in how each domain actually hires, plus the deliberate modern-hiring calibrations we made.
 
@@ -17,7 +17,7 @@ in how each domain actually hires, plus the deliberate modern-hiring calibration
 - **Bands:** `Strong ≥ 80 · Competitive ≥ 60 · Developing ≥ 40 · Early < 40`.
 - **Deterministic facts** (GitHub authenticity, fetched publications/portfolio) are computed in
   code and fed to the model as ground truth; the model scores each dimension with **cited
-  evidence** from the dossier. A `*` in `hireme agents` marks dimensions whose score is blended
+  evidence** from the dossier. A `*` in `hiregauge agents` marks dimensions whose score is blended
   with a deterministic, code-computed signal (GitHub / Scholar).
 - **Fairness:** scores must not depend on name, gender, demographics, or location. School
   prestige and GPA count only where a domain's real bar defensibly uses them — never as the
@@ -25,7 +25,7 @@ in how each domain actually hires, plus the deliberate modern-hiring calibration
 
 ### Strictness: an anchored, real-world bar
 
-HireMe deliberately scores like a real screen, not a participation award — the goal is to tell a
+HireGauge deliberately scores like a real screen, not a participation award — the goal is to tell a
 candidate honestly where they stand so they know what to improve. Two mechanisms enforce this:
 
 - **Anchored scale.** The evaluator prompt defines what each fraction of a dimension's max *means*
@@ -222,7 +222,7 @@ Sources: [Graduate Admission FAQ — UCSD CSE (GRE not required)](https://cse.uc
 
 ## Where to change weights
 
-Edit the `Dimension(...)` weights in `src/hireme/agents/<agent>.py` (they must still sum to 100 —
+Edit the `Dimension(...)` weights in `src/hiregauge/agents/<agent>.py` (they must still sum to 100 —
 `tests/test_agents.py` enforces it), update the matching table + rationale here, then run the
 `eval-calibrator` agent on the golden profiles to confirm the change behaves as intended. See the
-`hireme-rubric-authoring` skill for the full checklist.
+`hiregauge-rubric-authoring` skill for the full checklist.

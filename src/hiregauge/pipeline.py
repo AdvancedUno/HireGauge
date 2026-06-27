@@ -179,7 +179,7 @@ def run(cfg: RunConfig, *, provider: LLMProvider | None = None) -> Report:
             if publications_sig is None:
                 notes.append(
                     "publications: not fetched (needs a Google Scholar URL + `pip install "
-                    "\"hireme[scholar]\"`) — scored from resume text"
+                    "\"hiregauge[scholar]\"`) — scored from resume text"
                 )
 
     # --- kaggle ---

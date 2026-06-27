@@ -1,16 +1,16 @@
 ---
-name: hireme-run
-description: How to run HireMe end-to-end and interpret/verify its output — CLI flags, providers, the golden-profile smoke matrix (5 agents x experience levels), and the prompt-cache check. Use when running, testing, demoing, or verifying the tool.
+name: hiregauge-run
+description: How to run HireGauge end-to-end and interpret/verify its output — CLI flags, providers, the golden-profile smoke matrix (5 agents x experience levels), and the prompt-cache check. Use when running, testing, demoing, or verifying the tool.
 ---
 
-# Running & verifying HireMe
+# Running & verifying HireGauge
 
-HireMe evaluates a candidate's resume + GitHub + extras through one of five domain agents, calibrated to the
+HireGauge evaluates a candidate's resume + GitHub + extras through one of five domain agents, calibrated to the
 candidate's experience level, and emits a coaching report.
 
 ## Setup
 ```bash
-cd hireme
+cd hiregauge
 python -m venv .venv && source .venv/Scripts/activate   # Windows Git Bash; or .venv/bin/activate on *nix
 pip install -e ".[dev,gemini]"
 cp .env.example .env   # set GEMINI_API_KEY (default provider), GITHUB_TOKEN (raises GH rate limit)
@@ -18,13 +18,13 @@ cp .env.example .env   # set GEMINI_API_KEY (default provider), GITHUB_TOKEN (ra
 
 ## Core usage
 ```bash
-hireme --agent quant \
+hiregauge --agent quant \
        --resume "../EunHo Lee Main Resume SWE.pdf" \
        --github <user> --codeforces <handle> --scholar <url> --kaggle <handle> --site <url> \
        --yoe 1 --level new-grad --target-level junior \
        --model gemini-2.5-flash --format md --out report.md
-hireme agents          # list agents + the signals/dimensions each weights
-hireme --help
+hiregauge agents          # list agents + the signals/dimensions each weights
+hiregauge --help
 ```
 
 Key flags: `--agent {quant,airesearch,bigtech,general,university}` (required); inputs

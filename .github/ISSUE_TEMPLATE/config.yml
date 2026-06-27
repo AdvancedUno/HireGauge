@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: Questions & ideas (Discussions)
-    url: https://github.com/AdvancedUno/HireMe/discussions
+    url: https://github.com/AdvancedUno/HireGauge/discussions
     about: Ask questions or float an idea before filing an issue.
   - name: Report a security vulnerability
-    url: https://github.com/AdvancedUno/HireMe/security/advisories/new
+    url: https://github.com/AdvancedUno/HireGauge/security/advisories/new
     about: Please report vulnerabilities privately — not as a public issue.

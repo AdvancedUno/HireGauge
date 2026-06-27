@@ -15,7 +15,7 @@ from ..cache import Cache
 from ..models import WebSignal
 from .base import cached_model
 
-_UA = {"User-Agent": "Mozilla/5.0 (compatible; HireMe/0.1; +https://github.com/AdvancedUno/HireMe)"}
+_UA = {"User-Agent": "Mozilla/5.0 (compatible; HireGauge/0.1; +https://github.com/AdvancedUno/HireGauge)"}
 _TAG = re.compile(r"<[^>]+>")
 _WS = re.compile(r"\s+")
 _SCRIPT_STYLE = re.compile(r"<(script|style|noscript)[^>]*>.*?</\1>", re.IGNORECASE | re.DOTALL)

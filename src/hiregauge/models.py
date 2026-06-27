@@ -1,4 +1,4 @@
-"""Pydantic schemas for HireMe.
+"""Pydantic schemas for HireGauge.
 
 Layers:
 - **Inputs / signals** — raw, per-source data produced by collectors.

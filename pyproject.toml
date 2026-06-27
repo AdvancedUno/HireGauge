@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hireme"
+name = "hiregauge"
 version = "0.1.0"
 description = "Specialized, multi-agent candidate self-assessment across quant, AI research, big tech, general SWE, and university admissions."
 readme = "README.md"
@@ -37,18 +37,18 @@ openai = ["openai>=1.40"]
 gemini = ["google-genai>=0.3"]
 ollama = ["ollama>=0.3"]
 dev = ["pytest>=8", "pytest-mock>=3.14", "respx>=0.21", "ruff>=0.6"]
-all = ["hireme[web,scholar,kaggle,openai,gemini,ollama]"]
+all = ["hiregauge[web,scholar,kaggle,openai,gemini,ollama]"]
 
 [project.scripts]
-hireme = "hireme.cli:app"
+hiregauge = "hiregauge.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/AdvancedUno/HireMe"
-Repository = "https://github.com/AdvancedUno/HireMe"
-Issues = "https://github.com/AdvancedUno/HireMe/issues"
+Homepage = "https://github.com/AdvancedUno/HireGauge"
+Repository = "https://github.com/AdvancedUno/HireGauge"
+Issues = "https://github.com/AdvancedUno/HireGauge/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/hireme"]
+packages = ["src/hiregauge"]
 
 [tool.ruff]
 line-length = 100
@@ -61,7 +61,7 @@ ignore = ["E501", "UP042"]
 
 [tool.ruff.lint.per-file-ignores]
 # Typer intentionally uses function calls (Option/Argument) as argument defaults.
-"src/hireme/cli.py" = ["B008"]
+"src/hiregauge/cli.py" = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

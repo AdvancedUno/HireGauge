@@ -2,7 +2,7 @@
 
 Uses Gemini structured output (``response_schema`` + ``application/json``) to return
 a validated Pydantic object. ``google-genai`` is imported lazily so the rest of
-HireMe works without it installed.
+HireGauge works without it installed.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ class GeminiProvider:
             except ImportError as exc:  # pragma: no cover
                 raise RuntimeError(
                     "The 'google-genai' package is required for the Gemini provider. "
-                    'Install it with: pip install "hireme[gemini]"'
+                    'Install it with: pip install "hiregauge[gemini]"'
                 ) from exc
             if not self._api_key:
                 raise RuntimeError(

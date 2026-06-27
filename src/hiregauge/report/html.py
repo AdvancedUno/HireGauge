@@ -65,9 +65,9 @@ def render_html(report: Report) -> str:
     out: list[str] = [
         "<!doctype html><html lang='en'><head><meta charset='utf-8'>",
         "<meta name='viewport' content='width=device-width,initial-scale=1'>",
-        f"<title>HireMe — {_esc(report.agent)} evaluation</title>",
+        f"<title>HireGauge — {_esc(report.agent)} evaluation</title>",
         "<style>", _CSS, "</style></head><body>",
-        f"<h1>HireMe — {_esc(report.agent)} evaluation</h1>",
+        f"<h1>HireGauge — {_esc(report.agent)} evaluation</h1>",
         f"<p class='meta'><strong>{_esc(candidate_name(report))}</strong> · "
         f"{_esc(p.experience.describe())}</p>",
         f"<p><span class='badge' style='background:{color}'>{e.overall_score:g}/100 — "
@@ -126,7 +126,7 @@ def render_html(report: Report) -> str:
         out.append("<h2>Notes</h2>" + _ul(p.collection_notes))
 
     out.append(
-        "<footer>HireMe scores demonstrated skills, projects, contributions, and experience — not "
+        "<footer>HireGauge scores demonstrated skills, projects, contributions, and experience — not "
         "demographics. Pedigree/GPA count only where a domain's real bar uses them. Evidence is shown "
         "per dimension.</footer></body></html>"
     )

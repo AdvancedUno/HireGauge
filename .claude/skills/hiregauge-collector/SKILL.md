@@ -1,19 +1,19 @@
 ---
-name: hireme-collector
-description: How to add or modify a HireMe data-source collector — the Collector protocol, the never-hard-fail contract, the cache-key convention, recording API fixtures, and writing tests. Use whenever you create or edit a module under src/hireme/collectors/ or wire a new signal into the pipeline.
+name: hiregauge-collector
+description: How to add or modify a HireGauge data-source collector — the Collector protocol, the never-hard-fail contract, the cache-key convention, recording API fixtures, and writing tests. Use whenever you create or edit a module under src/hiregauge/collectors/ or wire a new signal into the pipeline.
 ---
 
-# Adding a HireMe collector
+# Adding a HireGauge collector
 
-A collector turns an external identity into a typed `Signal` in `src/hireme/models.py`. Collectors are the
-"ground truth" half of HireMe, so they must be robust and cached.
+A collector turns an external identity into a typed `Signal` in `src/hiregauge/models.py`. Collectors are the
+"ground truth" half of HireGauge, so they must be robust and cached.
 
 ## The contract (non-negotiable)
 1. **Never hard-fail.** Catch everything (network, 404, 403/429, parse errors, missing optional deps). Return
    `None`/empty and append a clear string to `CandidateProfile.collection_notes`. The run must still produce a report.
-2. **Cache external calls** with `hireme.cache.Cache` — key = `f"{source}:{identity}:{params}"`. Honor `--no-cache`.
+2. **Cache external calls** with `hiregauge.cache.Cache` — key = `f"{source}:{identity}:{params}"`. Honor `--no-cache`.
 3. **Typed output** — return the source's Pydantic `Signal`; extend `models.py` with optional, backward-compatible fields.
-4. **Config-driven secrets** — read tokens (`GITHUB_TOKEN`, `KAGGLE_*`) from `hireme.config.get_settings()`. Never hardcode.
+4. **Config-driven secrets** — read tokens (`GITHUB_TOKEN`, `KAGGLE_*`) from `hiregauge.config.get_settings()`. Never hardcode.
 5. **Lazy optional imports** — `trafilatura`, `scholarly`, `kaggle` import inside the function; degrade with a note if absent.
 
 ## Shape (follow `collectors/base.py` + `collectors/github.py`)
@@ -36,7 +36,7 @@ def collect(identity: str, *, settings, cache) -> Signal | None:
 - Save a real, sanitized response under `tests/fixtures/<source>/<case>.json` (strip emails/secrets/PII).
 - Write a pytest that mocks the HTTP layer (`respx` for httpx, `pytest-mock` otherwise) and asserts the parsed
   `Signal`. Add an edge case: 404 / rate-limit / empty → returns `None` + a note, never raises.
-- Run `pytest -k <source>`, then a live smoke: `hireme --agent general --<source> <id>`.
+- Run `pytest -k <source>`, then a live smoke: `hiregauge --agent general --<source> <id>`.
 
 ## Source cheatsheet
 - **GitHub**: `/users/{u}`, `/users/{u}/repos?sort=updated&per_page=100`, `/repos/{u}/{r}/contributors`,

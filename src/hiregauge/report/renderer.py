@@ -11,7 +11,7 @@ def render_markdown(report: Report) -> str:
     p = report.profile
     out: list[str] = []
 
-    out.append(f"# HireMe — {report.agent} evaluation")
+    out.append(f"# HireGauge — {report.agent} evaluation")
     out.append("")
     out.append(f"**Candidate:** {candidate_name(report)}  ")
     out.append(f"**Experience:** {p.experience.describe()}  ")
@@ -76,7 +76,7 @@ def render_markdown(report: Report) -> str:
 
     out.append("---")
     out.append(
-        "*HireMe scores demonstrated skills, projects, contributions, and experience — not demographics. "
+        "*HireGauge scores demonstrated skills, projects, contributions, and experience — not demographics. "
         "Pedigree/GPA count only where a domain's real bar uses them. Evidence is shown per dimension.*"
     )
     return "\n".join(out)

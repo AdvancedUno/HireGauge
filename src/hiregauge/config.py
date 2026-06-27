@@ -35,7 +35,7 @@ class Settings(BaseSettings):
 
     # --- cache ---
     cache_enabled: bool = True
-    cache_dir: str = ".hireme_cache"
+    cache_dir: str = ".hiregauge_cache"
 
 
 @lru_cache

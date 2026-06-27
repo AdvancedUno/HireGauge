@@ -13,7 +13,7 @@ from typing import Any
 
 
 class Cache:
-    def __init__(self, directory: str | Path = ".hireme_cache", enabled: bool = True) -> None:
+    def __init__(self, directory: str | Path = ".hiregauge_cache", enabled: bool = True) -> None:
         self.dir = Path(directory)
         self.enabled = enabled
         if self.enabled:

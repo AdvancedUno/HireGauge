@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from hireme.agents import get_agent
-from hireme.evaluator import _assemble, _RubricDimension, _RubricOutput
-from hireme.pipeline import RunConfig, run
+from hiregauge.agents import get_agent
+from hiregauge.evaluator import _assemble, _RubricDimension, _RubricOutput
+from hiregauge.pipeline import RunConfig, run
 
 
 class FakeProvider:

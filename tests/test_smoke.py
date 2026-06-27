@@ -5,13 +5,13 @@ Keeps CI meaningful before the full test suite (Phase 6) lands.
 
 import importlib
 
-import hireme
+import hiregauge
 
 
 def test_version_exposed():
-    assert hireme.__version__
+    assert hiregauge.__version__
 
 
 def test_core_modules_import():
-    for mod in ("hireme.models", "hireme.config", "hireme.cache"):
+    for mod in ("hiregauge.models", "hiregauge.config", "hiregauge.cache"):
         assert importlib.import_module(mod) is not None

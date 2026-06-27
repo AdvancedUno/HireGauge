@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from hireme.cli import _resolve_model
-from hireme.config import Settings
+from hiregauge.cli import _resolve_model
+from hiregauge.config import Settings
 
 
 def _settings(**kw) -> Settings:

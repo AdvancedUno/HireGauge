@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from hireme.agents import agent_names, all_agents, get_agent
+from hiregauge.agents import agent_names, all_agents, get_agent
 
 EXPECTED = {"quant", "airesearch", "bigtech", "general", "university"}
 VALID_SIGNALS = {"resume", "github", "publications", "kaggle", "web"}
@@ -52,4 +52,4 @@ def test_get_agent_unknown_raises():
 
 def test_cli_imports():
     # The Typer app must import cleanly (catches broken option wiring early).
-    from hireme.cli import app  # noqa: F401
+    from hiregauge.cli import app  # noqa: F401
