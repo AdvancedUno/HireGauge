@@ -1,4 +1,4 @@
-"""Resume collector — the hub of HireMe.
+"""Resume collector — the hub of HireGauge.
 
 Most users submit only a resume PDF. This module extracts the resume text *and*
 its embedded hyperlinks, then auto-discovers the candidate's external identifiers

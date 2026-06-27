@@ -1,4 +1,4 @@
-"""Allow running the CLI as ``python -m hireme`` (PATH-independent)."""
+"""Allow running the CLI as ``python -m hiregauge`` (PATH-independent)."""
 
 from __future__ import annotations
 

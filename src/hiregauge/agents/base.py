@@ -3,7 +3,7 @@
 An ``Agent`` is mostly *data*: the dimensions it scores (with weights that sum to
 100), which signals it consumes, its domain green/red flags, how the bar shifts by
 experience level, and a short prompt focus used by the LLM rubric pass. Keeping it
-declarative makes weights tunable and auditable (a core HireMe goal).
+declarative makes weights tunable and auditable (a core HireGauge goal).
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ class Dimension:
     @property
     def is_blended(self) -> bool:
         """True when this dimension's LLM score is anchored to a deterministic,
-        code-computed ground-truth signal (shown as ``*`` in ``hireme agents``)."""
+        code-computed ground-truth signal (shown as ``*`` in ``hiregauge agents``)."""
         return bool(self.gt_signal) and self.blend > 0
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from hireme.models import (
+from hiregauge.models import (
     CandidateProfile,
     DimensionScore,
     Evaluation,
@@ -11,8 +11,8 @@ from hireme.models import (
     ResumeParsed,
     ResumeSignal,
 )
-from hireme.report import render_html, render_markdown
-from hireme.report._common import candidate_name
+from hiregauge.report import render_html, render_markdown
+from hiregauge.report._common import candidate_name
 
 
 def _report() -> Report:
@@ -52,7 +52,7 @@ def test_render_html_structure_and_escaping():
 
 def test_render_markdown_has_scores_table():
     md = render_markdown(_report())
-    assert "# HireMe — general evaluation" in md
+    assert "# HireGauge — general evaluation" in md
     assert "| Project Quality | 15/20 |" in md
     assert "72/100 — **Competitive**" in md
 

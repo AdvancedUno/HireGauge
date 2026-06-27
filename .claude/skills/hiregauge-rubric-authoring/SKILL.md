@@ -1,15 +1,15 @@
 ---
-name: hireme-rubric-authoring
-description: Conventions and a checklist for authoring or calibrating a HireMe evaluator agent — dimension design, weight normalization, the deterministic-vs-LLM split, experience-level (YoE/stage) expectations, grounding claims with citations, and prompt-fragment structure. Use whenever you add or edit an agent under src/hireme/agents/ or its rubric prompt/weights.
+name: hiregauge-rubric-authoring
+description: Conventions and a checklist for authoring or calibrating a HireGauge evaluator agent — dimension design, weight normalization, the deterministic-vs-LLM split, experience-level (YoE/stage) expectations, grounding claims with citations, and prompt-fragment structure. Use whenever you add or edit an agent under src/hiregauge/agents/ or its rubric prompt/weights.
 ---
 
-# Authoring a HireMe evaluator agent
+# Authoring a HireGauge evaluator agent
 
-A HireMe agent encodes how one domain (`quant`, `airesearch`, `bigtech`, `general`, `university`) actually
+A HireGauge agent encodes how one domain (`quant`, `airesearch`, `bigtech`, `general`, `university`) actually
 evaluates candidates, calibrated to the candidate's experience level. Keep it **declarative, grounded, and
 auditable**.
 
-## Anatomy of an agent (`src/hireme/agents/<name>.py`)
+## Anatomy of an agent (`src/hiregauge/agents/<name>.py`)
 Subclass the base `Agent` and declare:
 - `name`, `description`.
 - `dimensions`: a list of `(key, label, weight, max, deterministic?)`. **Weights sum to 100.** `max` is the
@@ -18,7 +18,7 @@ Subclass the base `Agent` and declare:
 - `thresholds`: numeric, ground-truth cut points (e.g. Codeforces tiers, h-index buckets, first-author counts).
 - `level_expectations`: per `CareerStage`, which dimensions de/emphasize and which absences become red flags.
 - `green_flags` / `red_flags`: domain-specific detectors (deterministic where possible).
-- prompt fragments (Jinja under `src/hireme/prompts/templates/`): the domain criteria appended to the shared
+- prompt fragments (Jinja under `src/hiregauge/prompts/templates/`): the domain criteria appended to the shared
   fairness/anti-bias header.
 
 ## Rules

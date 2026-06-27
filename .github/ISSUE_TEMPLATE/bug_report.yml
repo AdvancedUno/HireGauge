@@ -1,5 +1,5 @@
 name: Bug report
-description: Something in HireMe behaves incorrectly or crashes.
+description: Something in HireGauge behaves incorrectly or crashes.
 title: "[Bug]: "
 labels: ["bug"]
 body:
@@ -19,7 +19,7 @@ body:
     id: repro
     attributes:
       label: Steps to reproduce
-      description: The exact `hireme` command (redact handles/keys) and any inputs.
+      description: The exact `hiregauge` command (redact handles/keys) and any inputs.
       render: shell
     validations:
       required: true
@@ -51,7 +51,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: HireMe version / commit
+      label: HireGauge version / commit
       placeholder: "0.1.0 or git SHA"
     validations:
       required: true

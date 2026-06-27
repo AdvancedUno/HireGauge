@@ -3,7 +3,7 @@
 Uses structured outputs via ``messages.parse`` when available, with graceful
 fallbacks for older SDKs. The large rubric system prompt is sent in a cache-control
 block so repeated runs read it cheaply. ``anthropic`` is imported lazily so the rest
-of HireMe works without it installed.
+of HireGauge works without it installed.
 """
 
 from __future__ import annotations

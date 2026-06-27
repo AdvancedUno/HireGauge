@@ -1,6 +1,6 @@
-# Contributing to HireMe
+# Contributing to HireGauge
 
-Thanks for helping make HireMe a genuinely useful, fair, and accurate tool.
+Thanks for helping make HireGauge a genuinely useful, fair, and accurate tool.
 
 ## Dev setup
 ```bash
@@ -12,16 +12,16 @@ ruff check .
 ```
 
 ## Project map
-- `src/hireme/collectors/` — turn an identity (GitHub user, Codeforces handle, …) into a typed `Signal`.
-- `src/hireme/analysis/` — verification (authenticity, red/green flags) on top of collected signals.
-- `src/hireme/agents/` — the 5 domain rubrics (dimensions, weights, thresholds, level expectations, prompts).
-- `src/hireme/evaluator.py` — deterministic scoring + LLM rubric pass, blended and level-calibrated.
-- `src/hireme/report/` — render Markdown / JSON / HTML + the candidate action plan.
+- `src/hiregauge/collectors/` — turn an identity (GitHub user, Codeforces handle, …) into a typed `Signal`.
+- `src/hiregauge/analysis/` — verification (authenticity, red/green flags) on top of collected signals.
+- `src/hiregauge/agents/` — the 5 domain rubrics (dimensions, weights, thresholds, level expectations, prompts).
+- `src/hiregauge/evaluator.py` — deterministic scoring + LLM rubric pass, blended and level-calibrated.
+- `src/hiregauge/report/` — render Markdown / JSON / HTML + the candidate action plan.
 - `docs/rubrics.md` — cited rubric grounding (weights, calibration notes, and sources).
 
 ## Working with the repo's Claude Code helpers
 This repo ships dev helpers under `.claude/` (used automatically when you work here with Claude Code):
-- **skills**: `hireme-rubric-authoring`, `hireme-collector`, `hireme-run`.
+- **skills**: `hiregauge-rubric-authoring`, `hiregauge-collector`, `hiregauge-run`.
 - **subagents**: `rubric-researcher`, `collector-builder`, `eval-calibrator`, `report-auditor`.
 
 ## Principles
@@ -35,8 +35,8 @@ This repo ships dev helpers under `.claude/` (used automatically when you work h
 5. **Calibrate to experience level.** Expectations differ for intern vs senior vs PhD.
 
 ## Adding things
-- **A data source** → follow the `hireme-collector` skill; add a fixture + test; wire into `pipeline.py`.
-- **An agent / rubric change** → follow the `hireme-rubric-authoring` skill; validate with the
+- **A data source** → follow the `hiregauge-collector` skill; add a fixture + test; wire into `pipeline.py`.
+- **An agent / rubric change** → follow the `hiregauge-rubric-authoring` skill; validate with the
   `eval-calibrator` subagent; update `docs/rubrics.md`.
 - Run a `report-auditor` pass before sending a PR that touches scoring or templates.
 

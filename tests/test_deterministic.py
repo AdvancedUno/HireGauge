@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-from hireme.analysis.deterministic import (
+from hiregauge.analysis.deterministic import (
     citation_strength,
     github_strength,
     publication_strength,
     signal_strengths,
 )
-from hireme.models import (
+from hiregauge.models import (
     CandidateProfile,
     GitHubRepo,
     GitHubSignal,

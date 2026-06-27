@@ -1,7 +1,7 @@
-"""HireMe command-line interface.
+"""HireGauge command-line interface.
 
-``hireme --agent <name> [inputs] [experience] [model/output]`` runs an evaluation;
-``hireme agents`` lists the evaluator agents and their rubrics.
+``hiregauge --agent <name> [inputs] [experience] [model/output]`` runs an evaluation;
+``hiregauge agents`` lists the evaluator agents and their rubrics.
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ for _stream in (sys.stdout, sys.stderr):
 app = typer.Typer(
     add_completion=False,
     no_args_is_help=True,
-    help="HireMe — specialized, multi-agent candidate self-assessment "
+    help="HireGauge — specialized, multi-agent candidate self-assessment "
     "(quant · airesearch · bigtech · general · university).",
 )
 console = Console()
@@ -143,7 +143,7 @@ def main(
     version: bool = typer.Option(False, "--version", help="Show version and exit."),
 ) -> None:
     if version:
-        console.print(f"hireme {__version__}")
+        console.print(f"hiregauge {__version__}")
         raise typer.Exit()
     if ctx.invoked_subcommand is not None:
         return

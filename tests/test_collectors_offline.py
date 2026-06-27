@@ -7,12 +7,12 @@ import re
 import httpx
 import respx
 
-from hireme.cache import Cache
-from hireme.collectors.base import cached_model
-from hireme.collectors.github import collect_github
-from hireme.collectors.web import collect_web
-from hireme.config import Settings
-from hireme.models import WebSignal
+from hiregauge.cache import Cache
+from hiregauge.collectors.base import cached_model
+from hiregauge.collectors.github import collect_github
+from hiregauge.collectors.web import collect_web
+from hiregauge.config import Settings
+from hiregauge.models import WebSignal
 
 
 @respx.mock

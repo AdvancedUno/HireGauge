@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from hireme.agents import all_agents
+from hiregauge.agents import all_agents
 
 _RUBRICS = Path(__file__).resolve().parents[1] / "docs" / "rubrics.md"
 

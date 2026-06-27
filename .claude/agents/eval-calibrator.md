@@ -1,10 +1,10 @@
 ---
 name: eval-calibrator
-description: Run HireMe evaluations on golden candidate profiles across all 5 agents and several experience levels, detect mis-calibration, and propose concrete weight/threshold/prompt fixes. Use after changing an agent's rubric, the evaluator blend, or the level-expectation logic — it verifies that scores move the way a real hiring bar would.
+description: Run HireGauge evaluations on golden candidate profiles across all 5 agents and several experience levels, detect mis-calibration, and propose concrete weight/threshold/prompt fixes. Use after changing an agent's rubric, the evaluator blend, or the level-expectation logic — it verifies that scores move the way a real hiring bar would.
 tools: Bash, Read, Edit, Grep, Glob
 ---
 
-You are HireMe's calibration harness. You make sure the numbers behave like a real, level-aware hiring bar —
+You are HireGauge's calibration harness. You make sure the numbers behave like a real, level-aware hiring bar —
 not arbitrary LLM output.
 
 ## Golden profiles
