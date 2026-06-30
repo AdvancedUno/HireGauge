@@ -73,11 +73,30 @@ def _resolve_model(model: str | None, prov: str, settings: Settings) -> str:
     return default_model_for(prov)
 
 
-def _execute(cfg, fmt: str, out: str | None) -> None:
+def _provider_or_exit(cfg, settings: Settings):
+    """Resolve the LLM provider and verify it is usable *before* any collection runs.
+
+    A missing key, missing SDK, or unimplemented provider is a hard misconfiguration:
+    report it clearly and exit non-zero rather than running a full collection pass that
+    can only end in a 0/100 "could not be completed" report (issue #19)."""
+    from .llm.factory import build_provider
+
+    try:
+        provider = build_provider(cfg.provider, cfg.model, settings)
+        provider.preflight()
+    except (NotImplementedError, ValueError, RuntimeError) as exc:
+        console.print(f"[bold red]Configuration error:[/bold red] {exc}")
+        raise typer.Exit(code=2) from exc
+    return provider
+
+
+def _execute(cfg, fmt: str, out: str | None, settings: Settings) -> None:
     from rich.markdown import Markdown
 
     from .pipeline import run as run_pipeline
     from .report import render_html, render_markdown
+
+    provider = _provider_or_exit(cfg, settings)
 
     a = get_agent(cfg.agent)
     console.print(
@@ -85,7 +104,7 @@ def _execute(cfg, fmt: str, out: str | None) -> None:
         f"[dim]{cfg.provider}:{cfg.model}[/dim]"
     )
     with console.status("[bold]Collecting signals + evaluating…[/bold]", spinner="dots"):
-        report = run_pipeline(cfg)
+        report = run_pipeline(cfg, provider=provider)
 
     md = render_markdown(report)
     if fmt == "json":
@@ -172,7 +191,7 @@ def main(
         role=role, jd=jd, experience=exp,
         provider=prov, model=mdl, mode=mode.value, no_cache=no_cache, refresh=refresh,
     )
-    _execute(cfg, fmt.value, out)
+    _execute(cfg, fmt.value, out, settings)
 
 
 if __name__ == "__main__":  # pragma: no cover

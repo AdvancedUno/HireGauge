@@ -70,6 +70,14 @@ class AnthropicProvider:
             )
         return self._client
 
+    def preflight(self) -> None:
+        """Fail fast if the key is missing or the SDK isn't installed (no network call)."""
+        if not self._api_key:
+            raise RuntimeError(
+                "ANTHROPIC_API_KEY is not set. Add it to your environment or .env file."
+            )
+        self._client_or_raise()
+
     def _user_content(self, user: str, pdf_path: str | None) -> list[dict]:
         content: list[dict] = []
         if pdf_path:
