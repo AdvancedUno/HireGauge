@@ -18,6 +18,12 @@ class LLMProvider(Protocol):
     name: str
     model: str
 
+    def preflight(self) -> None:
+        """Validate the provider is usable (package installed + key present) without
+        making a network call. Raise a clear, actionable error if it is not, so the CLI
+        can fail fast before running a full collection pass."""
+        ...
+
     def complete_structured(
         self,
         *,
