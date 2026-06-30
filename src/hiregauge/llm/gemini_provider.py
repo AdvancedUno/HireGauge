@@ -41,6 +41,14 @@ class GeminiProvider:
             self._client = genai.Client(api_key=self._api_key)
         return self._client
 
+    def preflight(self) -> None:
+        """Fail fast if the key is missing or the SDK isn't installed (no network call)."""
+        if not self._api_key:
+            raise RuntimeError(
+                "GEMINI_API_KEY is not set. Add it to your environment or .env file."
+            )
+        self._client_or_raise()
+
     def complete_structured(
         self,
         *,
