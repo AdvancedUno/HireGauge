@@ -18,6 +18,7 @@ env/
 
 # HireGauge runtime
 .hiregauge_cache/
+.hireme_cache/
 reports/
 *.report.md
 *.report.json
