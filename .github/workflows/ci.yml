@@ -22,6 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Guard against committed cache dirs (PII)
+        shell: bash
+        run: |
+          hits=$(git ls-files -- '*_cache/*')
+          if [ -n "$hits" ]; then
+            echo "::error::Cache directories must never be committed — they hold fetched candidate data (PII). See issue #16. Tracked cache files:"
+            echo "$hits"
+            exit 1
+          fi
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:

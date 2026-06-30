@@ -17,8 +17,9 @@ env/
 !.env.example
 
 # HireGauge runtime
-.hiregauge_cache/
-.hireme_cache/
+# Glob covers .hiregauge_cache/, the legacy .hireme_cache/, and any future *_cache dir.
+# Cache files hold fetched candidate data (PII) and must never be committed — see #16.
+*_cache/
 reports/
 *.report.md
 *.report.json
@@ -42,4 +43,5 @@ report.md
 docs/PLAN.md
 docs/TODO.md
 
+# Candidate inputs (resumes / exports) — never commit real PII
 resume/
