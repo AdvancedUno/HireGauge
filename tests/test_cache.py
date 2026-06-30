@@ -5,7 +5,16 @@ from __future__ import annotations
 import json
 import time
 
-from hiregauge.cache import DEFAULT_MAX_AGE, Cache
+from hiregauge.cache import (
+    DEFAULT_MAX_AGE,
+    GITHUB_MAX_AGE,
+    KAGGLE_MAX_AGE,
+    SCHOLAR_MAX_AGE,
+    WEB_MAX_AGE,
+    Cache,
+)
+from hiregauge.config import Settings
+from hiregauge.models import KaggleSignal, PublicationSignal, WebSignal
 
 
 def test_fresh_entry_is_a_hit(tmp_path):
@@ -60,3 +69,69 @@ def test_disabled_cache_reads_and_writes_nothing(tmp_path):
     c = Cache(tmp_path, enabled=False)
     c.set("k", {"v": 1})
     assert c.get("k") is None
+
+
+# --- per-source TTLs: each collector overrides the default with its own max_age ---
+
+
+def test_per_source_ttls_are_ordered_by_volatility():
+    # GitHub is the most volatile (shortest), default sits between, slow movers are longer.
+    assert GITHUB_MAX_AGE < DEFAULT_MAX_AGE < WEB_MAX_AGE
+    assert WEB_MAX_AGE <= SCHOLAR_MAX_AGE
+    assert WEB_MAX_AGE <= KAGGLE_MAX_AGE
+
+
+def test_github_collector_passes_github_ttl(monkeypatch):
+    from hiregauge.collectors import github as gh
+
+    seen: list[float | None] = []
+
+    def fake_http_json(url, *, cache, cache_key, headers=None, params=None, max_age=None):
+        seen.append(max_age)
+        return {"login": "octocat"} if cache_key.startswith("gh:user:") else []
+
+    monkeypatch.setattr(gh, "http_json", fake_http_json)
+    gh.collect_github("octocat", settings=Settings(_env_file=None), cache=Cache(enabled=False))
+    assert seen == [GITHUB_MAX_AGE, GITHUB_MAX_AGE]
+
+
+def test_web_collector_passes_web_ttl(monkeypatch):
+    from hiregauge.collectors import web as webmod
+
+    seen: dict[str, float | None] = {}
+
+    def fake_cached_model(cache, key, model, *, max_age=None):
+        seen["max_age"] = max_age
+        return WebSignal(url="https://x.dev")  # cached hit => short-circuit before any fetch
+
+    monkeypatch.setattr(webmod, "cached_model", fake_cached_model)
+    webmod.collect_web("https://x.dev", cache=Cache(enabled=False))
+    assert seen["max_age"] == WEB_MAX_AGE
+
+
+def test_scholar_collector_passes_scholar_ttl(monkeypatch):
+    from hiregauge.collectors import scholar as sch
+
+    seen: dict[str, float | None] = {}
+
+    def fake_cached_model(cache, key, model, *, max_age=None):
+        seen["max_age"] = max_age
+        return PublicationSignal(source="scholar")  # cached hit => no scholarly call
+
+    monkeypatch.setattr(sch, "cached_model", fake_cached_model)
+    sch.collect_publications(scholar_url="https://scholar.google.com/citations?user=ABC123", cache=Cache(enabled=False))
+    assert seen["max_age"] == SCHOLAR_MAX_AGE
+
+
+def test_kaggle_collector_passes_kaggle_ttl(monkeypatch):
+    from hiregauge.collectors import kaggle as kg
+
+    seen: dict[str, float | None] = {}
+
+    def fake_cached_model(cache, key, model, *, max_age=None):
+        seen["max_age"] = max_age
+        return KaggleSignal(handle="x")  # cached hit => short-circuit
+
+    monkeypatch.setattr(kg, "cached_model", fake_cached_model)
+    kg.collect_kaggle("x", settings=Settings(_env_file=None), cache=Cache(enabled=False))
+    assert seen["max_age"] == KAGGLE_MAX_AGE

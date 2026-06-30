@@ -24,8 +24,20 @@ import time
 from pathlib import Path
 from typing import Any
 
+_HOUR = 60 * 60
+_DAY = 24 * _HOUR
+
 # Default time-to-live for cached external data (24h). Tunable per-call via ``max_age``.
-DEFAULT_MAX_AGE = 24 * 60 * 60
+DEFAULT_MAX_AGE = _DAY
+
+# Per-source TTLs (issue #18): each external signal ages at a different rate, so
+# collectors override the default — volatile data is refetched sooner, slow-moving data
+# later. (Immutable sources like a published arXiv record would pass ``max_age=None``,
+# the same way the content-keyed resume parse does.)
+GITHUB_MAX_AGE = 12 * _HOUR  # stars / commits / repos move daily
+SCHOLAR_MAX_AGE = 7 * _DAY  # h-index / citations move over weeks
+WEB_MAX_AGE = 3 * _DAY  # portfolio / blog change occasionally
+KAGGLE_MAX_AGE = 7 * _DAY  # handle-only record today; rarely changes
 
 # Envelope marker + version so we can tell a wrapped entry from a raw legacy value
 # (and from an API payload that happens to contain a ``fetched_at`` key).
