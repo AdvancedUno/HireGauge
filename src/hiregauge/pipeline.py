@@ -56,6 +56,7 @@ class RunConfig:
     model: str = "gemini-2.5-flash"
     mode: str = "candidate"
     no_cache: bool = False
+    refresh: bool = False
 
 
 def _fallback_eval(agent: Agent, error: str) -> Evaluation:
@@ -86,7 +87,9 @@ def _parse_resume(
         return None
     digest = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
     key = f"resume_parse:{digest}:{model}"
-    cached = cache.get(key)
+    # The parse is keyed by the resume's content digest, so it never goes stale — opt it
+    # out of the TTL to avoid a needless (and costly) LLM re-parse of identical text.
+    cached = cache.get(key, max_age=None)
     if cached is not None:
         try:
             return ResumeParsed(**cached)
@@ -106,7 +109,11 @@ def _parse_resume(
 
 def run(cfg: RunConfig, *, provider: LLMProvider | None = None) -> Report:
     settings = get_settings()
-    cache = Cache(settings.cache_dir, enabled=settings.cache_enabled and not cfg.no_cache)
+    cache = Cache(
+        settings.cache_dir,
+        enabled=settings.cache_enabled and not cfg.no_cache,
+        refresh=cfg.refresh,
+    )
     agent = get_agent(cfg.agent)
     notes: list[str] = []
     if provider is None:

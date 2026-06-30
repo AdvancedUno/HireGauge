@@ -11,7 +11,7 @@ import re
 
 import httpx
 
-from ..cache import Cache
+from ..cache import WEB_MAX_AGE, Cache
 from ..models import WebSignal
 from .base import cached_model
 
@@ -39,7 +39,7 @@ def collect_web(url: str, *, cache: Cache, kind: str = "site") -> WebSignal | No
     if not url:
         return None
     key = f"web:{url}"
-    cached = cached_model(cache, key, WebSignal)
+    cached = cached_model(cache, key, WebSignal, max_age=WEB_MAX_AGE)
     if cached is not None:
         return cached
     try:

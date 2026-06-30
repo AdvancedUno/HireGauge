@@ -12,18 +12,20 @@ from typing import Any, TypeVar
 import httpx
 from pydantic import BaseModel
 
-from ..cache import Cache
+from ..cache import DEFAULT_MAX_AGE, Cache
 
 DEFAULT_TIMEOUT = 12.0
 
 T = TypeVar("T", bound=BaseModel)
 
 
-def cached_model(cache: Cache, key: str, model: type[T]) -> T | None:
-    """Rehydrate a cached value into ``model``. Returns ``None`` on a miss OR when the
-    cached JSON no longer matches the schema (drift/corruption) — so a collector degrades
+def cached_model(
+    cache: Cache, key: str, model: type[T], *, max_age: float | None = DEFAULT_MAX_AGE
+) -> T | None:
+    """Rehydrate a cached value into ``model``. Returns ``None`` on a miss / expiry OR when
+    the cached JSON no longer matches the schema (drift/corruption) — so a collector degrades
     to a refetch instead of raising, honoring the never-hard-fail contract."""
-    data = cache.get(key)
+    data = cache.get(key, max_age=max_age)
     if data is None:
         return None
     try:
@@ -40,9 +42,12 @@ def http_json(
     headers: dict[str, str] | None = None,
     params: dict[str, Any] | None = None,
     timeout: float = DEFAULT_TIMEOUT,
+    max_age: float | None = DEFAULT_MAX_AGE,
 ) -> Any | None:
-    """GET JSON with caching. Returns parsed JSON on HTTP 200, else ``None``. Never raises."""
-    cached = cache.get(cache_key)
+    """GET JSON with caching. Returns parsed JSON on HTTP 200, else ``None``. Never raises.
+
+    Entries older than ``max_age`` seconds are treated as a miss and refetched."""
+    cached = cache.get(cache_key, max_age=max_age)
     if cached is not None:
         return cached
     try:

@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import re
 
-from ..cache import Cache
+from ..cache import SCHOLAR_MAX_AGE, Cache
 from ..models import Publication, PublicationSignal
 from .base import cached_model
 
@@ -36,7 +36,7 @@ def collect_publications(
         return None
 
     key = f"scholar:{user_id}"
-    cached = cached_model(cache, key, PublicationSignal)
+    cached = cached_model(cache, key, PublicationSignal, max_age=SCHOLAR_MAX_AGE)
     if cached is not None:
         return cached
 

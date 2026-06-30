@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 
-from ..cache import Cache
+from ..cache import GITHUB_MAX_AGE, Cache
 from ..config import Settings
 from ..models import GitHubRepo, GitHubSignal
 from .base import http_json
@@ -49,7 +49,11 @@ def collect_github(identifier: str, *, settings: Settings, cache: Cache) -> GitH
     headers = _headers(settings)
 
     profile = http_json(
-        f"{_API}/users/{username}", cache=cache, cache_key=f"gh:user:{username}", headers=headers
+        f"{_API}/users/{username}",
+        cache=cache,
+        cache_key=f"gh:user:{username}",
+        headers=headers,
+        max_age=GITHUB_MAX_AGE,
     )
     if not isinstance(profile, dict) or "login" not in profile:
         return None
@@ -60,6 +64,7 @@ def collect_github(identifier: str, *, settings: Settings, cache: Cache) -> GitH
         cache_key=f"gh:repos:{username}",
         headers=headers,
         params={"sort": "updated", "per_page": 100, "type": "owner"},
+        max_age=GITHUB_MAX_AGE,
     )
     repos: list[GitHubRepo] = []
     if isinstance(repos_raw, list):

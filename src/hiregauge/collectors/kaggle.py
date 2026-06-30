@@ -10,7 +10,7 @@ a future authenticated implementation.
 
 from __future__ import annotations
 
-from ..cache import Cache
+from ..cache import KAGGLE_MAX_AGE, Cache
 from ..config import Settings
 from ..models import KaggleSignal
 from .base import cached_model
@@ -20,7 +20,7 @@ def collect_kaggle(handle: str, *, settings: Settings, cache: Cache) -> KaggleSi
     if not handle:
         return None
     key = f"kaggle:{handle}"
-    cached = cached_model(cache, key, KaggleSignal)
+    cached = cached_model(cache, key, KaggleSignal, max_age=KAGGLE_MAX_AGE)
     if cached is not None:
         return cached
     sig = KaggleSignal(handle=handle)
