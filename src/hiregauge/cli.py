@@ -139,6 +139,9 @@ def main(
     fmt: OutputFormat = typer.Option(OutputFormat.md, "--format", help="Report format."),
     out: str | None = typer.Option(None, "--out", help="Write the report to this path."),
     no_cache: bool = typer.Option(False, "--no-cache", help="Bypass the API response cache."),
+    refresh: bool = typer.Option(
+        False, "--refresh", help="Refetch external signals and rewrite the cache (keeps the resume parse)."
+    ),
     verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose output."),
     version: bool = typer.Option(False, "--version", help="Show version and exit."),
 ) -> None:
@@ -167,7 +170,7 @@ def main(
         resume=resume, github=github, scholar=scholar, orcid=orcid, arxiv=arxiv,
         codeforces=codeforces, leetcode=leetcode, kaggle=kaggle, site=site, linkedin=linkedin,
         role=role, jd=jd, experience=exp,
-        provider=prov, model=mdl, mode=mode.value, no_cache=no_cache,
+        provider=prov, model=mdl, mode=mode.value, no_cache=no_cache, refresh=refresh,
     )
     _execute(cfg, fmt.value, out)
 

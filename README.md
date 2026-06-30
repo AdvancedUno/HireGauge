@@ -87,4 +87,6 @@ auto-discovered from it. If you omit `--agent`, it defaults to `general`.
 ### Key flags
 - `--agent {quant,airesearch,bigtech,general,university}` (defaults to `general`)
 - inputs: `--resume --github --scholar/--orcid/--arxiv --codeforces/--leetcode --kaggle --site --linkedin`
+- caching: external signals (GitHub/Scholar/web) are cached for ~24h. `--refresh` refetches
+  them and rewrites the cache (the resume parse is kept); `--no-cache` bypasses the cache entirely.
 - e
