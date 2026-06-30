@@ -61,7 +61,7 @@ but ordinary hiring screen.
 
 ## Install
 ```bash
-git clone <repo> && cd hiregauge
+git clone https://github.com/AdvancedUno/HireGauge.git && cd HireGauge
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[dev,gemini]"
 cp .env.example .env      # set GEMINI_API_KEY  (and GITHUB_TOKEN for higher GitHub limits)
@@ -90,4 +90,43 @@ auto-discovered from it. If you omit `--agent`, it defaults to `general`.
 - caching: external signals are cached with per-source TTLs (GitHub ~12h, web ~3d, Scholar/Kaggle
   ~7d) and refetched once stale. `--refresh` refetches them now and rewrites the cache (the resume
   parse is kept); `--no-cache` bypasses the cache entirely.
-- e
+- experience/level: `--yoe <years>` `--level <stage>` `--target-level <stage>` `--title <current title>`
+- target: `--role <text>` `--jd <file>`
+- model/output: `--provider {gemini,anthropic}` `--model <id>` `--mode {candidate,recruiter}`
+  `--format {md,json,html}` `--out <path>`
+- misc: `--verbose` `--version`
+
+Run `hiregauge --help` for the full, authoritative list.
+
+## How it works
+1. **Collect.** The resume is parsed (LLM) into structured fields, and identifiers it contains
+   (GitHub, Scholar, site, …) are auto-discovered. Collectors then fetch each external signal —
+   GitHub, publications, Kaggle, portfolio/web — fault-tolerantly: a failed or missing source
+   degrades the report (noted in `collection_notes`) but never aborts the run. External calls are
+   cached with per-source TTLs.
+2. **Verify & ground.** Hard signals (GitHub activity, fetched h-index/citations, repo authenticity)
+   are computed deterministically and used to **anchor** the model's per-dimension scores, rather
+   than leaving them to the LLM alone.
+3. **Evaluate.** The selected agent scores each rubric dimension as a fraction of its max against a
+   scale that defaults low without evidence, calibrated to the candidate's experience level.
+4. **Report.** Scores roll up into an overall score, band, screen verdict, percentile estimate, and a
+   prioritized action plan, with cited evidence per dimension.
+
+## Development & testing
+```bash
+pip install -e ".[dev]"
+pytest            # run the test suite
+ruff check .      # lint
+```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines, and [`docs/rubrics.md`](docs/rubrics.md)
+for the per-agent rubric grounding.
+
+## License
+Released under the [MIT License](LICENSE). See [NOTICE](NOTICE) for attribution details.
+
+## Acknowledgements
+HireGauge is **inspired by — but contains no code copied from** — HackerRank's open-source
+[`hiring-agent`](https://github.com/interviewstreet/hiring-agent). That project demonstrated the idea
+of an LLM reading a candidate's materials; HireGauge takes a deliberately different and more advanced
+direction (domain-specialized agents, multi-source signal fusion, signal verification, experience-level
+calibration, strict anti-inflation scoring, and a coaching report).
