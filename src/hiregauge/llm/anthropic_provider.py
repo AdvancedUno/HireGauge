@@ -16,6 +16,8 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel
 
+from ._retry import RETRYABLE_STATUS, call_with_retry
+
 T = TypeVar("T", bound=BaseModel)
 
 # Models that accept adaptive thinking (claude-4.6+ family). Others fall back to plain calls.
@@ -24,6 +26,15 @@ _ADAPTIVE_THINKING = ("opus-4-6", "opus-4-7", "opus-4-8", "sonnet-4-6", "fable-5
 
 def _supports_adaptive(model: str) -> bool:
     return any(tag in model for tag in _ADAPTIVE_THINKING)
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    """True for transient Anthropic failures: connection/timeout blips and retryable HTTP
+    statuses (429 rate limit, 500/503 server, 529 overloaded). Classified by attribute so
+    it doesn't require importing the SDK's exception classes."""
+    if type(exc).__name__ in ("APIConnectionError", "APITimeoutError"):
+        return True
+    return getattr(exc, "status_code", None) in RETRYABLE_STATUS
 
 
 def _first_text(resp: Any) -> str:
@@ -119,11 +130,16 @@ class AnthropicProvider:
         if _supports_adaptive(self.model):
             base_kwargs["thinking"] = {"type": "adaptive"}
 
+        # Each network call below is wrapped so a transient 429/500/503/529 is retried
+        # with backoff instead of falling through to the next (capability) tier or failing.
+        def _send(fn):
+            return call_with_retry(fn, is_retryable=_is_retryable)
+
         # 1) Preferred: structured-output parse helper.
         parse = getattr(client.messages, "parse", None)
         if callable(parse):
             try:
-                resp = parse(output_format=schema, **base_kwargs)
+                resp = _send(lambda: parse(output_format=schema, **base_kwargs))
                 parsed = getattr(resp, "parsed_output", None)
                 if parsed is not None:
                     return parsed
@@ -132,17 +148,19 @@ class AnthropicProvider:
 
         # 2) output_config json_schema on a normal create.
         try:
-            resp = client.messages.create(
-                output_config={
-                    "format": {"type": "json_schema", "schema": schema.model_json_schema()}
-                },
-                **base_kwargs,
+            resp = _send(
+                lambda: client.messages.create(
+                    output_config={
+                        "format": {"type": "json_schema", "schema": schema.model_json_schema()}
+                    },
+                    **base_kwargs,
+                )
             )
             return schema.model_validate_json(_first_text(resp))
         except Exception:  # noqa: BLE001
             pass
 
         # 3) Plain create + lenient JSON extraction (relies on the prompt asking for JSON).
-        resp = client.messages.create(**base_kwargs)
+        resp = _send(lambda: client.messages.create(**base_kwargs))
         text = _extract_json(_first_text(resp))
         return schema.model_validate(json.loads(text))
