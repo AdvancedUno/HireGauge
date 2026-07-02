@@ -7,12 +7,12 @@ HireGauge works without it installed.
 
 from __future__ import annotations
 
-import random
-import time
 from pathlib import Path
 from typing import Any, TypeVar
 
 from pydantic import BaseModel
+
+from ._retry import RETRYABLE_STATUS, call_with_retry
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -79,20 +79,18 @@ class GeminiProvider:
         )
         from google.genai import errors as genai_errors  # noqa: PLC0415 (lazy on purpose)
 
-        resp = None
-        max_attempts = 6
-        for attempt in range(max_attempts):
-            try:
-                resp = client.models.generate_content(
-                    model=self.model, contents=contents, config=config
-                )
-                break
-            except genai_errors.APIError as exc:
-                code = getattr(exc, "code", None)
-                if code in (429, 500, 503) and attempt < max_attempts - 1:
-                    time.sleep(min(2**attempt, 8) + random.random())
-                    continue
-                raise
+        def _retryable(exc: BaseException) -> bool:
+            return (
+                isinstance(exc, genai_errors.APIError)
+                and getattr(exc, "code", None) in RETRYABLE_STATUS
+            )
+
+        resp = call_with_retry(
+            lambda: client.models.generate_content(
+                model=self.model, contents=contents, config=config
+            ),
+            is_retryable=_retryable,
+        )
 
         parsed = getattr(resp, "parsed", None)
         if isinstance(parsed, schema):
