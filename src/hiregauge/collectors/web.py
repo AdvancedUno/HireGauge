@@ -3,16 +3,19 @@
 Uses ``trafilatura`` for clean main-text extraction when installed; otherwise falls
 back to a crude tag-strip so the collector still works on a core install. Cached;
 never raises.
+
+The URL is untrusted (auto-discovered from a resume), so the fetch goes through
+``_safe_fetch.safe_get`` — SSRF-guarded (no private/loopback/link-local targets, even via
+redirect) and body-size-capped. See issue #12.
 """
 
 from __future__ import annotations
 
 import re
 
-import httpx
-
 from ..cache import WEB_MAX_AGE, Cache
 from ..models import WebSignal
+from ._safe_fetch import safe_get
 from .base import cached_model
 
 _UA = {"User-Agent": "Mozilla/5.0 (compatible; HireGauge/0.1; +https://github.com/AdvancedUno/HireGauge)"}
@@ -43,8 +46,10 @@ def collect_web(url: str, *, cache: Cache, kind: str = "site") -> WebSignal | No
     if cached is not None:
         return cached
     try:
-        resp = httpx.get(url, headers=_UA, timeout=12.0, follow_redirects=True)
+        resp = safe_get(url, headers=_UA, timeout=12.0)
     except Exception:
+        # Never raise out of a collector — an unsafe/blocked URL or transport error just
+        # degrades this source (the pipeline records a "could not fetch" note).
         return None
     if resp.status_code != 200 or "html" not in resp.headers.get("content-type", "").lower():
         return None

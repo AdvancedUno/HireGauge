@@ -56,7 +56,11 @@ def test_collect_github_404_returns_none():
 
 
 @respx.mock
-def test_collect_web_offline_extracts_title_and_strips_script():
+def test_collect_web_offline_extracts_title_and_strips_script(monkeypatch):
+    # Stub host resolution to a public IP so the SSRF guard passes without real DNS.
+    monkeypatch.setattr(
+        "hiregauge.collectors._safe_fetch.resolve_host", lambda host, port: ["93.184.216.34"]
+    )
     page = (
         "<html><head><title>My Site</title></head><body>"
         "<script>danger()</script><h1>Hi</h1>"
@@ -85,7 +89,10 @@ def test_cached_model_tolerates_corrupt_entry(tmp_path):
 
 
 @respx.mock
-def test_collect_web_non_html_returns_none():
+def test_collect_web_non_html_returns_none(monkeypatch):
+    monkeypatch.setattr(
+        "hiregauge.collectors._safe_fetch.resolve_host", lambda host, port: ["93.184.216.34"]
+    )
     respx.get(re.compile(r"https://api\.example\.com")).mock(
         return_value=httpx.Response(200, json={"x": 1}, headers={"content-type": "application/json"})
     )
