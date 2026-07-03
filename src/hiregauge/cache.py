@@ -99,7 +99,7 @@ class Cache:
         if not is_enveloped:
             return value if max_age is None else None
         if max_age is not None and fetched_at is not None:
-            if (time.time() - fetched_at) > max_age:
+            if (time.time() - fetched_at) >= max_age:
                 return None
         return value
 
