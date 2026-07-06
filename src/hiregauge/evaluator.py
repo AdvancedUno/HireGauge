@@ -8,7 +8,7 @@ computed deterministically in code from those per-dimension scores.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .agents import Agent
 from .analysis import signal_strengths
@@ -54,6 +54,12 @@ _STANDARD_NOTE = (
     "This is a real, strict hiring screen — not a supportive mentor and not a participation award. Average "
     "applicants do not stand out; do not inflate ordinary résumés. Calibrate the bar to the candidate's stated "
     "level, but reward only demonstrated, verifiable accomplishments."
+)
+
+_REPAIR_REMINDER = (
+    "\n\nIMPORTANT: Your previous response did not match the required schema. Return ONLY valid "
+    "JSON that matches the schema exactly. Do not include markdown fences, commentary, or any "
+    "truncated/incomplete output."
 )
 
 
@@ -320,9 +326,18 @@ def _assemble(
 
 
 def evaluate(agent: Agent, profile: CandidateProfile, provider: LLMProvider) -> Evaluation:
-    out = provider.complete_structured(
-        system=_system_prompt(agent),
-        user=_user_prompt(agent, profile),
-        schema=_RubricOutput,
-    )
+    system = _system_prompt(agent)
+    user = _user_prompt(agent, profile)
+    try:
+        out = provider.complete_structured(
+            system=system,
+            user=user,
+            schema=_RubricOutput,
+        )
+    except (ValidationError, ValueError, RuntimeError):
+        out = provider.complete_structured(
+            system=system,
+            user=user + _REPAIR_REMINDER,
+            schema=_RubricOutput,
+        )
     return _assemble(agent, out, signal_strengths(profile))

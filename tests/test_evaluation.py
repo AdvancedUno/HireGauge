@@ -15,11 +15,21 @@ class FakeProvider:
     name = "fake"
     model = "fake-1"
 
-    def __init__(self, scores: dict[str, float] | None = None, raise_exc: bool = False) -> None:
+    def __init__(
+        self,
+        scores: dict[str, float] | None = None,
+        raise_exc: bool = False,
+        fail_times: int = 0,
+    ) -> None:
         self.scores = scores or {}
         self.raise_exc = raise_exc
+        self.fail_times = fail_times
+        self.call_count = 0
 
     def complete_structured(self, *, system: str, user: str, schema: type[Any], **_: Any) -> Any:
+        self.call_count += 1
+        if self.fail_times > 0 and self.call_count <= self.fail_times:
+            raise ValueError("malformed json")
         if self.raise_exc:
             raise RuntimeError("boom")
         dims = [
@@ -118,6 +128,32 @@ def test_pipeline_provider_error_falls_back(tmp_path):
     resume.write_text("Jane Doe jane@example.com", encoding="utf-8")
     cfg = RunConfig(agent="general", resume=str(resume), no_cache=True)
     report = run(cfg, provider=FakeProvider(raise_exc=True))
+    assert report.evaluation.band == "Not evaluated"
+    assert report.evaluation.overall_score == 0.0
+
+
+def test_pipeline_repairs_after_one_parse_failure(tmp_path):
+    agent = get_agent("general")
+    scores = {d.key: d.weight for d in agent.dimensions}
+    resume = tmp_path / "r.txt"
+    resume.write_text("Jane Doe jane@example.com", encoding="utf-8")
+    cfg = RunConfig(agent="general", resume=str(resume), no_cache=True)
+    provider = FakeProvider(scores=scores, fail_times=1)
+    report = run(cfg, provider=provider)
+
+    assert provider.call_count == 2
+    assert report.evaluation.band != "Not evaluated"
+    assert report.evaluation.overall_score == 100.0
+
+
+def test_pipeline_second_parse_failure_still_falls_back(tmp_path):
+    resume = tmp_path / "r.txt"
+    resume.write_text("Jane Doe jane@example.com", encoding="utf-8")
+    cfg = RunConfig(agent="general", resume=str(resume), no_cache=True)
+    provider = FakeProvider(fail_times=2)
+    report = run(cfg, provider=provider)
+
+    assert provider.call_count == 2
     assert report.evaluation.band == "Not evaluated"
     assert report.evaluation.overall_score == 0.0
 
