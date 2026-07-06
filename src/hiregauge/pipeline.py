@@ -116,6 +116,7 @@ def run(cfg: RunConfig, *, provider: LLMProvider | None = None) -> Report:
     )
     agent = get_agent(cfg.agent)
     notes: list[str] = []
+    caller_supplied_provider = provider is not None
     if provider is None:
         provider = build_provider(cfg.provider, cfg.model, settings)
 
@@ -125,7 +126,7 @@ def run(cfg: RunConfig, *, provider: LLMProvider | None = None) -> Report:
         notes.append(f"Could not read resume: {cfg.resume}")
     if cfg.resume is None:
         notes.append("No resume provided — evaluating from flags/links only.")
-    if resume_sig is not None:
+    if resume_sig is not None and not caller_supplied_provider:
         resume_sig.parsed = _parse_resume(resume_sig.text, provider, cache, cfg.model)
     discovered = resume_sig.discovered if resume_sig else DiscoveredProfiles()
 
