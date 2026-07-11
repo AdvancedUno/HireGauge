@@ -6,6 +6,14 @@ from typing import Any
 
 from hiregauge.agents import get_agent
 from hiregauge.evaluator import _assemble, _RubricDimension, _RubricOutput
+from hiregauge.models import (
+    CandidateProfile,
+    GitHubRepo,
+    GitHubSignal,
+    Publication,
+    PublicationSignal,
+    ResumeSignal,
+)
 from hiregauge.pipeline import RunConfig, run
 
 
@@ -98,6 +106,43 @@ def test_blend_lifts_low_score_toward_strong_signal():
     by = {d.key: d for d in ev.dimensions}
     assert by[pq.key].score > pq.weight * 0.4  # lifted by the strong signal
     assert "[auto: github=" in by[pq.key].evidence
+
+
+def test_red_flag_injections_merged():
+    """Deterministic red-flag injections appear alongside LLM-emitted ones."""
+    agent = get_agent("general")
+    out = _RubricOutput(
+        summary="x",
+        dimensions=[
+            _RubricDimension(key=d.key, score=d.weight * 0.5, evidence="e", confidence=0.7)
+            for d in agent.dimensions
+        ],
+        strengths=[], gaps=[], green_flags=[], red_flags=["LLM-found issue"],
+        action_plan=[],
+    )
+    ev = _assemble(
+        agent, out,
+        red_flag_injections=["Star-count inflation detected: resume claims 1000+ stars but max_stars=12."],
+    )
+    assert "LLM-found issue" in ev.red_flags
+    assert "Star-count inflation" in ev.red_flags
+    assert len(ev.red_flags) == 2
+
+
+def test_red_flag_injections_empty_by_default():
+    """Without injections, only LLM-emitted flags appear."""
+    agent = get_agent("general")
+    out = _RubricOutput(
+        summary="x",
+        dimensions=[
+            _RubricDimension(key=d.key, score=d.weight * 0.5, evidence="e", confidence=0.7)
+            for d in agent.dimensions
+        ],
+        strengths=[], gaps=[], green_flags=[], red_flags=["LLM-found issue"],
+        action_plan=[],
+    )
+    ev = _assemble(agent, out)
+    assert ev.red_flags == ["LLM-found issue"]
 
 
 def test_pipeline_full_marks_offline(tmp_path):
