@@ -11,7 +11,7 @@ from __future__ import annotations
 from pydantic import BaseModel
 
 from .agents import Agent
-from .analysis import signal_strengths
+from .analysis import crosscheck_claims, signal_strengths
 from .llm.base import LLMProvider
 from .models import ActionItem, CandidateProfile, DimensionScore, DiscoveredProfiles, Evaluation
 from .prompt_safety import SYSTEM_DIRECTIVE, neutralize, wrap_untrusted
@@ -212,7 +212,11 @@ def _resume_structured_summary(profile: CandidateProfile) -> str | None:
     return "\n".join(lines)
 
 
-def _user_prompt(agent: Agent, profile: CandidateProfile) -> str:
+def _user_prompt(
+    agent: Agent,
+    profile: CandidateProfile,
+    claim_issues: list[str] | None = None,
+) -> str:
     exp = profile.experience
     dims = "\n".join(
         f"  - key={d.key} | {d.label} | max_points={d.weight:g} | {d.description}"
@@ -240,6 +244,15 @@ def _user_prompt(agent: Agent, profile: CandidateProfile) -> str:
     if websites:
         parts.append(f"## Personal sites/blogs: {websites}")
     parts += ["", "## GitHub", _github_summary(profile)]
+
+    # Inject deterministic claim discrepancies as a computed section.
+    if claim_issues:
+        parts += [
+            "",
+            "## Claim discrepancies (computed from fetched data)",
+            *[f"- {issue}" for issue in claim_issues],
+        ]
+
     for section in (
         _resume_structured_summary(profile),
         _pub_summary(profile),
@@ -259,7 +272,10 @@ def _user_prompt(agent: Agent, profile: CandidateProfile) -> str:
 
 
 def _assemble(
-    agent: Agent, out: _RubricOutput, strengths: dict[str, float | None] | None = None
+    agent: Agent,
+    out: _RubricOutput,
+    strengths: dict[str, float | None] | None = None,
+    red_flag_injections: list[str] | None = None,
 ) -> Evaluation:
     strengths = strengths or {}
     by_key = {d.key: d for d in out.dimensions}
@@ -302,6 +318,12 @@ def _assemble(
     percentile = None
     if out.percentile is not None:
         percentile = int(max(0, min(round(out.percentile), 100)))
+
+    # Merge deterministic red-flag injections alongside LLM-emitted ones.
+    all_red_flags = list(out.red_flags)
+    if red_flag_injections:
+        all_red_flags.extend(red_flag_injections)
+
     return Evaluation(
         agent=agent.name,
         overall_score=overall,
@@ -314,15 +336,18 @@ def _assemble(
         strengths=out.strengths,
         gaps=out.gaps,
         green_flags=out.green_flags,
-        red_flags=out.red_flags,
+        red_flags=all_red_flags,
         action_plan=out.action_plan,
     )
 
 
 def evaluate(agent: Agent, profile: CandidateProfile, provider: LLMProvider) -> Evaluation:
+    # Compute deterministic claim cross-checks once, used in both prompt and red_flags.
+    claim_issues = crosscheck_claims(profile)
+
     out = provider.complete_structured(
         system=_system_prompt(agent),
-        user=_user_prompt(agent, profile),
+        user=_user_prompt(agent, profile, claim_issues=claim_issues or None),
         schema=_RubricOutput,
     )
-    return _assemble(agent, out, signal_strengths(profile))
+    return _assemble(agent, out, signal_strengths(profile), red_flag_injections=claim_issues or None)
