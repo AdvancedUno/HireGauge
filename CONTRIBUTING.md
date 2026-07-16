@@ -43,5 +43,33 @@ This repo ships dev helpers under `.claude/` (used automatically when you work h
 ## PRs
 Keep changes focused, add/adjust tests, and run `pytest` + `ruff` (update `docs/rubrics.md` if you change weights).
 
+## Releases
+Releases are published from Git tags through GitHub Actions and PyPI Trusted Publishing.
+
+Before the first PyPI release, configure a pending publisher on PyPI with:
+
+- PyPI project name: `hiregauge`
+- Owner: `AdvancedUno`
+- Repository: `HireGauge`
+- Workflow file: `release.yml`
+- Environment: `pypi`
+
+Release checklist:
+
+1. Ensure CI is green on `main`.
+2. Move the relevant notes from `CHANGELOG.md`'s `Unreleased` section into a dated version section.
+3. Bump the `version` in `pyproject.toml` to the same version.
+4. Commit the release prep, tag it as `vX.Y.Z`, and push the tag:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin main --tags
+   ```
+
+5. The `Release` workflow will run tests, build the sdist and wheel, check the
+   distributions, and publish to PyPI through OIDC. Do not add PyPI API tokens
+   or passwords to repository secrets.
+6. After the workflow completes, confirm that `pip install hiregauge` resolves from PyPI.
+
 ## Code of Conduct
 By participating, you agree to abide by our [Code of Conduct](.github/CODE_OF_CONDUCT.md).
