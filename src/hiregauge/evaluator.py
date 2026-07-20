@@ -12,6 +12,7 @@ from pydantic import BaseModel, ValidationError
 
 from .agents import Agent
 from .analysis import signal_strengths
+from .analysis.crosscheck import crosscheck_claims
 from .llm.base import LLMProvider
 from .models import ActionItem, CandidateProfile, DimensionScore, DiscoveredProfiles, Evaluation
 from .prompt_safety import SYSTEM_DIRECTIVE, neutralize, wrap_untrusted
@@ -218,7 +219,7 @@ def _resume_structured_summary(profile: CandidateProfile) -> str | None:
     return "\n".join(lines)
 
 
-def _user_prompt(agent: Agent, profile: CandidateProfile) -> str:
+def _user_prompt(agent: Agent, profile: CandidateProfile, claim_issues: list[str] = None) -> str:
     exp = profile.experience
     dims = "\n".join(
         f"  - key={d.key} | {d.label} | max_points={d.weight:g} | {d.description}"
@@ -265,7 +266,7 @@ def _user_prompt(agent: Agent, profile: CandidateProfile) -> str:
 
 
 def _assemble(
-    agent: Agent, out: _RubricOutput, strengths: dict[str, float | None] | None = None
+    agent: Agent, out: _RubricOutput, strengths: dict[str, float | None] | None = None, red_flag_injections: list[str] | None = None
 ) -> Evaluation:
     strengths = strengths or {}
     by_key = {d.key: d for d in out.dimensions}
@@ -327,7 +328,11 @@ def _assemble(
 
 def evaluate(agent: Agent, profile: CandidateProfile, provider: LLMProvider) -> Evaluation:
     system = _system_prompt(agent)
-    user = _user_prompt(agent, profile)
+    
+    # Compute deterministic cross-checks
+    issues = crosscheck_claims(profile.model_dump())
+    
+    user = _user_prompt(agent, profile, claim_issues=issues)
     try:
         out = provider.complete_structured(
             system=system,
@@ -340,4 +345,4 @@ def evaluate(agent: Agent, profile: CandidateProfile, provider: LLMProvider) -> 
             user=user + _REPAIR_REMINDER,
             schema=_RubricOutput,
         )
-    return _assemble(agent, out, signal_strengths(profile))
+    return _assemble(agent, out, signal_strengths(profile), red_flag_injections=issues)
