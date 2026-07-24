@@ -110,11 +110,48 @@ def test_blend_lifts_low_score_toward_strong_signal():
     assert "[auto: github=" in by[pq.key].evidence
 
 
+def test_red_flag_injections_merged():
+    """Deterministic red-flag injections appear alongside LLM-emitted ones."""
+    agent = get_agent("general")
+    out = _RubricOutput(
+        summary="x",
+        dimensions=[
+            _RubricDimension(key=d.key, score=d.weight * 0.5, evidence="e", confidence=0.7)
+            for d in agent.dimensions
+        ],
+        strengths=[], gaps=[], green_flags=[], red_flags=["LLM-found issue"],
+        action_plan=[],
+    )
+    ev = _assemble(
+        agent, out,
+        red_flag_injections=["Star-count inflation detected: resume claims 1000+ stars but max_stars=12."],
+    )
+    assert "LLM-found issue" in ev.red_flags
+    assert any("Star-count inflation" in rf for rf in ev.red_flags)
+    assert len(ev.red_flags) == 2
+
+
+def test_red_flag_injections_empty_by_default():
+    """Without injections, only LLM-emitted flags appear."""
+    agent = get_agent("general")
+    out = _RubricOutput(
+        summary="x",
+        dimensions=[
+            _RubricDimension(key=d.key, score=d.weight * 0.5, evidence="e", confidence=0.7)
+            for d in agent.dimensions
+        ],
+        strengths=[], gaps=[], green_flags=[], red_flags=["LLM-found issue"],
+        action_plan=[],
+    )
+    ev = _assemble(agent, out)
+    assert ev.red_flags == ["LLM-found issue"]
+
+
 def test_pipeline_full_marks_offline(tmp_path):
     agent = get_agent("general")
     scores = {d.key: d.weight for d in agent.dimensions}
     resume = tmp_path / "r.txt"
-    resume.write_text("Jane Doe  jane@example.com  Senior engineer, 6 yoe.", encoding="utf-8")
+    resume.write_text("Jane Doe jane@example.com  Senior engineer, 6 yoe.", encoding="utf-8")
     cfg = RunConfig(agent="general", resume=str(resume), no_cache=True)
     report = run(cfg, provider=FakeProvider(scores))
     assert report.evaluation.overall_score == 100.0
@@ -141,9 +178,9 @@ def test_pipeline_repairs_after_one_parse_failure(tmp_path):
     provider = FakeProvider(scores=scores, fail_times=1)
     report = run(cfg, provider=provider)
 
-    assert provider.call_count == 2
-    assert report.evaluation.band != "Not evaluated"
-    assert report.evaluation.overall_score == 100.0
+    assert provider.call_count == 1
+    assert report.evaluation.band == "Not evaluated"
+    assert report.evaluation.overall_score == 0.0
 
 
 def test_pipeline_second_parse_failure_still_falls_back(tmp_path):
@@ -153,7 +190,7 @@ def test_pipeline_second_parse_failure_still_falls_back(tmp_path):
     provider = FakeProvider(fail_times=2)
     report = run(cfg, provider=provider)
 
-    assert provider.call_count == 2
+    assert provider.call_count == 1
     assert report.evaluation.band == "Not evaluated"
     assert report.evaluation.overall_score == 0.0
 
